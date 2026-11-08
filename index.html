@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CareFlow is an integrated hospital management and patient support system: symptom guidance, doctor search, online appointments, prescriptions, blood donor hub and doctor verification.">
+<meta name="theme-color" content="#0B2A5B">
+<title>CareFlow</title>
+<link rel="stylesheet" href="careflow-theme.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind+Siliguri:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Palette: white ground, navy brand. Red is reserved for emergencies only. */
+:root{
+  color-scheme:light;
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#EEF3FA; --ink:#0B2A5B; --ink-2:#4A5B7C; --line:#D6DFEE; --grid:rgba(11,42,91,.06);
+  --primary:#0B2A5B; --on-primary:#FFFFFF; --primary-soft:#E3EBF8; --navy-deep:#071C40;
+  --emerg:#C0262D; --on-emerg:#FFFFFF; --emerg-soft:#FCE5E5;
+  --warn:#7A4E00; --warn-soft:#FFF0CC; --ok:#16744A; --ok-soft:#DCF3E6;
+  --shadow:0 1px 2px rgba(11,42,91,.06),0 14px 30px -16px rgba(11,42,91,.28);
+  --f-display:'Bricolage Grotesque','Hind Siliguri',system-ui,sans-serif;
+  --f-body:'Hind Siliguri',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--f-body);-webkit-font-smoothing:antialiased;min-width:0}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.12;letter-spacing:-.015em;margin:0;text-wrap:balance}
+h1{font-size:clamp(2.1rem,5.4vw,3.6rem);font-weight:800}
+h2{font-size:clamp(1.45rem,3vw,2rem);font-weight:800}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+a{color:var(--primary)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #3D6FD1;outline-offset:2px;border-radius:6px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.muted{color:var(--ink-2)}
+.mono{font-family:var(--f-mono);font-size:.86em;font-variant-numeric:tabular-nums}
+.bn{color:var(--ink-2);font-weight:400}
+.eyebrow{font:600 .78rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin-bottom:12px}
+.lead{font-size:1.12rem;color:var(--ink-2);max-width:56ch}
+
+/* utility bar + header */
+.util{background:var(--navy-deep);color:#D8E3F8;font-size:.85rem}
+.util-row{display:flex;gap:6px 22px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding-block:7px}
+.util-row span{display:inline-flex;align-items:center;gap:6px}
+.util a{color:#fff;text-decoration:none;font-weight:600}
+@media (max-width:700px){.util .hide-sm{display:none}}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(11,42,91,.03)}
+.top-row{display:flex;align-items:center;gap:8px 14px;padding-block:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font:800 1.3rem var(--f-display);color:var(--ink);text-decoration:none;letter-spacing:-.02em}
+.nav{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{padding:8px 13px;border-radius:999px;text-decoration:none;color:var(--ink-2);font-weight:500;white-space:nowrap}
+.nav a:hover{color:var(--ink);background:var(--surface-2)}
+.nav a[aria-current="page"]{background:var(--primary);color:var(--on-primary);font-weight:600}
+.top-actions{display:flex;gap:8px;align-items:center;margin-left:auto}
+@media (max-width:860px){.nav{order:3;flex-basis:100%;flex:none;width:100%}}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.btn-primary:hover{background:#12397E;border-color:#12397E}
+.btn-danger{background:var(--emerg);border-color:var(--emerg);color:var(--on-emerg)}
+.btn-danger:hover{background:var(--emerg);filter:brightness(1.08)}
+.btn-sm{min-height:36px;padding:6px 12px;font-size:.9rem;border-radius:8px}
+.btn-lg{min-height:52px;padding:12px 24px;font-size:1.05rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.ico{flex:none;vertical-align:-3px}
+
+/* chips, pills */
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 15px;border-radius:999px;cursor:pointer;min-height:40px;font-weight:500}
+.chip:hover{border-color:var(--primary)}
+.chip[aria-pressed="true"]{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.chip .bn{font-size:.85em;margin-left:6px;color:inherit;opacity:.75}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--ink-2)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--emerg-soft);color:var(--emerg)}
+.pill.info{background:var(--primary-soft);color:var(--primary)}
+
+/* cards, grids */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.grid-doc{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
+.split{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.split{grid-template-columns:minmax(0,1fr)}}
+.page{padding-block:36px 56px}
+.page-head{margin-bottom:26px;display:grid;gap:10px}
+.sec{padding-block:34px}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:12px 20px;flex-wrap:wrap;margin-bottom:18px}
+.stack{display:grid;gap:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row-between{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.count{margin-bottom:12px;font-size:.92rem}
+.empty{border:1.5px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--ink-2);display:grid;gap:6px}
+.empty strong{color:var(--ink);font-family:var(--f-display);font-size:1.1rem}
+
+/* hero */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#F3F7FD 0%,#FFFFFF 100%)}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(to right,var(--grid) 1px,transparent 1px),linear-gradient(to bottom,var(--grid) 1px,transparent 1px);background-size:28px 28px;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent);mask-image:linear-gradient(to bottom,#000 55%,transparent);pointer-events:none}
+.hero-grid{position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);gap:44px;padding-block:52px 48px;align-items:center}
+@media (max-width:900px){.hero-grid{grid-template-columns:minmax(0,1fr);gap:30px;padding-block:34px 36px}}
+.hero h1{margin-bottom:16px}
+.quick{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 8px}
+.cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.trust{display:flex;gap:8px 22px;flex-wrap:wrap;margin-top:22px;color:var(--ink-2);font-size:.92rem}
+.trust span{display:inline-flex;align-items:center;gap:6px}
+.trust svg{color:var(--primary)}
+.tag{background:var(--surface);border:1.5px solid var(--ink);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+.tag-head{display:flex;justify-content:space-between;gap:10px;background:var(--ink);color:#fff;padding:10px 18px;font-size:.74rem;letter-spacing:.12em}
+.tag-rows{margin:0;padding:6px 18px}
+.tag-rows div{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;padding:11px 0;border-bottom:1px dashed var(--line)}
+.tag-rows div:last-child{border-bottom:0}
+.tag dt{font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);padding-top:2px}
+.tag dd{margin:0;font-weight:500}
+.tag-warn{margin:0 18px;padding:10px 12px;border-radius:10px;background:var(--emerg-soft);color:var(--emerg);font-size:.9rem;font-weight:500}
+.tag .btn{margin:16px 18px 18px;width:calc(100% - 36px)}
+
+/* stats band */
+.band{background:var(--primary);color:#fff}
+.band-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;padding-block:30px}
+.band-grid div{display:grid;gap:2px;border-left:2px solid rgba(255,255,255,.25);padding-left:16px}
+.band-grid b{font:800 2.2rem var(--f-display);font-variant-numeric:tabular-nums;line-height:1.1}
+.band-grid span{color:#C9D8F2;font-size:.93rem}
+
+/* strip */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.strip a{display:grid;gap:4px;padding:18px 20px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-decoration:none;color:var(--ink)}
+.strip a:hover{border-color:var(--primary);box-shadow:var(--shadow)}
+.strip a strong{font:600 1.05rem var(--f-display);display:flex;align-items:center;gap:8px}
+.strip a span{color:var(--ink-2);font-size:.95rem}
+.strip a.em{background:var(--emerg-soft);border-color:transparent}
+.strip a.em strong{color:var(--emerg)}
+
+/* steps, departments */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:6px}
+.steps li::before{content:"0" counter(s);font:500 .85rem var(--f-mono);color:var(--primary)}
+.steps li p{color:var(--ink-2);font-size:.95rem}
+.dept{display:flex;gap:14px;align-items:center;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-align:left;cursor:pointer;width:100%}
+.dept:hover{border-color:var(--primary);box-shadow:var(--shadow)}
+.dept .code{flex:none;width:52px;height:52px;border-radius:10px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font:500 .9rem var(--f-mono);letter-spacing:.04em}
+.dept b{display:block;font-weight:600}
+.dept small{color:var(--ink-2)}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.why .card{display:grid;gap:8px;align-content:start}
+.why .dot{width:42px;height:42px;border-radius:10px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center}
+.faq{display:grid;gap:10px;max-width:860px}
+.faq details{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0 18px}
+.faq summary{cursor:pointer;font-weight:600;padding:15px 0;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font:600 1.3rem var(--f-mono);color:var(--primary)}
+.faq details[open] summary::after{content:"–"}
+.faq details p{color:var(--ink-2);padding-bottom:16px}
+
+/* doctor card */
+.doc{display:grid;gap:14px;align-content:start}
+.doc-top{display:flex;gap:14px;align-items:center}
+.avatar{flex:none;width:52px;height:52px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font:800 1.05rem var(--f-display);overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar.sm{width:32px;height:32px;font-size:.78rem}
+.avatar.lg{width:72px;height:72px;font-size:1.4rem}
+.avatar.xl{width:128px;height:128px;font-size:2.4rem;box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--primary)}
+.doc h3{margin-bottom:2px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin:0}
+.kv dt{font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2)}
+.kv dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.kv .wide{grid-column:1/-1}
+.doc-foot{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.doc-next{background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:.92rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* forms */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.field{display:grid;gap:6px;min-width:0}
+.field.full{grid-column:1/-1}
+label,.lbl{font-weight:600;font-size:.9rem}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid #BCC9E0;border-radius:8px;padding:10px 12px;min-height:44px;width:100%;min-width:0}
+textarea{min-height:92px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:3px solid #C7D7F3;border-color:var(--primary)}
+input[type="checkbox"],input[type="radio"]{width:20px;height:20px;min-height:0;accent-color:var(--primary)}
+.check{display:flex;gap:10px;align-items:center;font-weight:500;cursor:pointer}
+.days{display:flex;gap:8px;flex-wrap:wrap}
+.days label{display:flex;gap:6px;align-items:center;font-weight:500;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.hint{font-size:.88rem;color:var(--ink-2)}
+.err{background:var(--emerg-soft);color:var(--emerg);padding:10px 14px;border-radius:10px;font-weight:500}
+.okbox{background:var(--ok-soft);color:var(--ok);padding:10px 14px;border-radius:10px;font-weight:500}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.slot{min-height:44px;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;font-weight:500;font-variant-numeric:tabular-nums}
+.slot:hover:not([disabled]){border-color:var(--primary)}
+.slot[aria-pressed="true"]{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.slot[disabled]{opacity:.4;text-decoration:line-through;cursor:not-allowed}
+
+/* symptoms */
+.sym{display:flex;flex-wrap:wrap;gap:8px}
+.bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--primary);border-radius:99px}
+.alert-box{display:grid;gap:8px;background:var(--emerg-soft);color:var(--emerg);border-radius:14px;padding:18px}
+.alert-box h3{color:var(--emerg)}
+.alert-box ul{margin:0;padding-left:20px}
+.res{display:grid;gap:12px}
+.res-doc{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px;border-radius:10px;background:var(--surface-2)}
+
+/* tables, tabs */
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{width:100%;border-collapse:collapse;font-size:.94rem;min-width:620px}
+.tbl th{font:600 .72rem var(--f-body);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2)}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:20px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;cursor:pointer;color:var(--ink-2);font-weight:600;white-space:nowrap;min-height:44px}
+.tabs button[aria-selected="true"]{color:var(--primary);border-bottom-color:var(--primary)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px}
+.tile{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--primary);border-radius:12px;padding:16px;display:grid;gap:4px}
+.tile b{font:800 1.9rem var(--f-display);font-variant-numeric:tabular-nums}
+.tile span{color:var(--ink-2);font-size:.9rem}
+.track{list-style:none;display:flex;gap:6px;padding:0;margin:0}
+.track li{flex:1;font-size:.76rem;color:var(--ink-2);border-top:3px solid var(--line);padding-top:6px}
+.track li.on{border-color:var(--primary);color:var(--primary);font-weight:600}
+.hbar{display:grid;grid-template-columns:130px minmax(0,1fr) 28px;gap:10px;align-items:center;font-size:.92rem}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.timeline li{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px}
+.drop{width:58px;height:58px;border-radius:50% 50% 50% 8px;transform:rotate(-45deg);background:var(--emerg);color:var(--on-emerg);display:grid;place-items:center;flex:none}
+.drop b{transform:rotate(45deg);font:800 1.05rem var(--f-display)}
+.req{display:flex;gap:18px;align-items:center}
+
+/* auth + profile */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:var(--surface-2);border-radius:10px}
+.seg button{border:0;background:transparent;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;min-height:44px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--primary);box-shadow:0 1px 3px rgba(11,42,91,.2)}
+.pw{position:relative}
+.pw input{padding-right:78px}
+.pw-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);min-height:34px;padding:4px 10px;border:0;background:transparent;color:var(--primary);font-weight:600;cursor:pointer;border-radius:8px}
+.pw-btn:hover{background:var(--primary-soft)}
+.linkbtn{background:none;border:0;color:var(--primary);font-weight:600;cursor:pointer;padding:4px 0;text-decoration:underline;min-height:36px}
+.demo{border-top:1px dashed var(--line);padding-top:16px;display:grid;gap:10px}
+.demo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.me{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);font-weight:600;padding:3px 14px 3px 3px;border-radius:999px;border:1px solid var(--line);background:var(--surface);min-height:40px}
+.me:hover,.me[aria-current="page"]{background:var(--primary-soft)}
+.me span:last-child{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prof-head{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin-bottom:22px}
+.photo-box{display:grid;justify-items:center;gap:14px;padding:6px}
+.bio{font-size:.92rem}
+.modal-box.narrow{max-width:500px}
+.photo-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.top-actions{flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:520px){.me span:last-child{display:none}.me{padding:3px}.top-actions{flex:1 1 100%;margin-left:0;justify-content:flex-start}.brand{margin-right:auto}}
+
+/* footer, modal, toast */
+.foot{background:var(--navy-deep);color:#C9D8F2;margin-top:30px;font-size:.93rem}
+.foot a{color:#fff;text-decoration:none}
+.foot-main{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:28px;padding-block:40px 28px}
+@media (max-width:860px){.foot-main{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.foot-main{grid-template-columns:minmax(0,1fr)}}
+.foot h4{color:#fff;font-size:.95rem;margin-bottom:12px;font-weight:600}
+.foot ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.foot .brand{color:#fff;margin-bottom:12px}
+.foot-bot{border-top:1px solid rgba(255,255,255,.14);padding-block:16px;display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-between;font-size:.86rem;color:#9FB4DB}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(4,18,45,.62);display:grid;place-items:center;padding:16px;overflow:auto}
+.modal[hidden],.toast[hidden]{display:none}
+.modal-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;max-width:680px;width:100%;max-height:100%;overflow:auto;padding:24px;box-shadow:var(--shadow)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;z-index:60;max-width:calc(100% - 32px);font-weight:500}
+.rx-row{display:grid;grid-template-columns:minmax(0,2fr) 110px 140px 80px 44px;gap:8px;align-items:end;margin-bottom:10px}
+@media (max-width:640px){.rx-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.rx-row .rx-med{grid-column:1/-1}.hbar{grid-template-columns:100px minmax(0,1fr) 24px}.tag-rows div,.timeline li{grid-template-columns:minmax(0,1fr)}}
+@media print{.util,.top,.foot,.toast{display:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- <div class="util">
+  <div class="wrap util-row">
+    <span><strong>Emergency 24/7:</strong> <a href="tel:999">999</a> · <a class="mono" href="tel:+8801700000999">+880 1700-000999</a></span>
+    <span class="hide-sm">Station Road, Dinajpur · info@careflow.demo · OPD hours follow each doctor's schedule</span>
+  </div>
+</div> -->
+<header class="top">
+  <div class="wrap top-row">
+    <a class="brand" href="#home" aria-label="CareFlow home">
+      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--primary)"/><path d="M4 17h6l2.5-6 4 11 2.5-5H28" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      CareFlow
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#home" data-r="home">Home</a>
+      <a href="#care" data-r="care">Find care</a>
+      <a href="#doctors" data-r="doctors">Doctors</a>
+      <a href="#book" data-r="book">Book</a>
+      <a href="#blood" data-r="blood">Blood hub</a>
+      <a href="#verify" data-r="verify">Verify a doctor</a>
+    </nav>
+    <div class="top-actions" id="top-user"></div>
+  </div>
+</header>
+<main id="app"></main>
+<footer class="foot">
+  <div class="wrap foot-main">
+    <div>
+      <a class="brand" href="#home"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#fff"/><path d="M4 17h6l2.5-6 4 11 2.5-5H28" fill="none" stroke="#0B2A5B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>CareFlow</a>
+      <p>Integrated Hospital Management &amp; Patient Support System. Symptom guidance, doctor booking, prescriptions and an emergency blood donor hub in one place.</p>
+    </div>
+    <div><h4>Patients</h4><ul><li><a href="#care">Find care by symptom</a></li><li><a href="#doctors">Doctors and schedules</a></li><li><a href="#book">Book an appointment</a></li><li><a href="#login">Patient login</a></li></ul></div>
+    <div><h4>Community</h4><ul><li><a href="#blood">Blood donor hub</a></li><li><a href="#verify">Verify a doctor</a></li><li><a href="#verify">Report a fake doctor</a></li></ul></div>
+    <div><h4>Contact</h4><ul><li>CareFlow Hospital, Station Road, Dinajpur</li><li><a class="mono" href="tel:+8801700000999">+880 1700-000999</a> (emergency)</li><li>info@careflow.demo</li></ul></div>
+  </div>
+  <div class="wrap foot-bot">
+    <span>© 2026 CareFlow · Team of "E", Computer Science &amp; Technology, Dinajpur Govt Polytechnic Institute</span>
+    <span>Demo project. Contact details and sample data are placeholders.</span>
+  </div>
+</footer>
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="Details"><div class="modal-box" id="modal-body"></div></div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(()=>{
+'use strict';
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const fmtDate=s=>parse(s).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const fmtLong=s=>s?parse(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+const t12=m=>{let h=Math.floor(m/60),ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+pad(m%60)+' '+ap};
+const hh=m=>m%60?t12(m):((Math.floor(m/60)%12||12)+' '+(m>=720?'PM':'AM'));
+const money=n=>'৳'+Number(n).toLocaleString('en-IN');
+const initials=n=>n.replace(/^Dr\.?\s*/i,'').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const byWhen=(a,b)=>a.date.localeCompare(b.date)||a.min-b.min;
+const ICONS={
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',check:'<path d="M5 13l4 4L19 7"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',plus:'<path d="M12 5v14M5 12h14"/>',
+  phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>',
+  pin:'<path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',drop:'<path d="M12 3s6 6.5 6 11a6 6 0 11-12 0c0-4.5 6-11 6-11z"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2.5 2.5L16 9.5"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',alert:'<path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.01"/>',
+  doc:'<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'
+};
+const ico=(n,s)=>'<svg class="ico" width="'+(s||18)+'" height="'+(s||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+'</svg>';
+const PILL={Pending:'warn',Approved:'info',Completed:'ok',Cancelled:'',Active:'ok','On leave':'warn','Under review':'warn','Confirmed fake':'bad',Cleared:'ok',Dismissed:'',Paid:'ok',Due:'warn',Available:'ok','Rest period':'warn',Open:'bad',Closed:'',Unverified:'warn',Verified:'ok'};
+const pill=s=>'<span class="pill '+(PILL[s]||'')+'">'+esc(s)+'</span>';
+const emptyBox=(t,x)=>'<div class="empty"><strong>'+esc(t)+'</strong><span>'+esc(x)+'</span></div>';
+const av=(e,cls)=>'<span class="avatar '+(cls||'')+'" aria-hidden="true">'+(e&&e.photo?'<img src="'+esc(e.photo)+'" alt="">':esc(initials((e&&e.name)||'?')))+'</span>';
+const validEmail=s=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+const short=n=>{const w=String(n||'').trim().split(/\s+/);return /^dr\.?$/i.test(w[0])?w.slice(0,2).join(' '):w[0]};
+const nd=v=>v?esc(v):'<span class="muted">Not added</span>';
+
+/* ---------- reference data ---------- */
+const DEPTS=[
+ {c:'CAR',n:'Cardiology',bn:'হৃদরোগ'},{c:'NEU',n:'Neurology',bn:'স্নায়ুরোগ'},{c:'MED',n:'General Medicine',bn:'মেডিসিন'},
+ {c:'PED',n:'Pediatrics',bn:'শিশুরোগ'},{c:'GYN',n:'Gynecology',bn:'স্ত্রীরোগ ও প্রসূতি'},{c:'ORT',n:'Orthopedics',bn:'হাড় ও জোড়া'},
+ {c:'ENT',n:'ENT',bn:'নাক-কান-গলা'},{c:'DER',n:'Dermatology',bn:'চর্মরোগ'},{c:'GAS',n:'Gastroenterology',bn:'পরিপাকতন্ত্র'},{c:'OPH',n:'Ophthalmology',bn:'চক্ষুরোগ'}
+];
+const dept=c=>DEPTS.find(d=>d.c===c)||{c:c,n:c,bn:''};
+const SYMP=[
+ {id:'chest',en:'Chest pain',bn:'বুকে ব্যথা',d:{CAR:3,MED:1}},
+ {id:'palp',en:'Racing heartbeat',bn:'বুক ধড়ফড়',d:{CAR:3}},
+ {id:'breath',en:'Shortness of breath',bn:'শ্বাসকষ্ট',d:{CAR:2,MED:2}},
+ {id:'head',en:'Headache',bn:'মাথাব্যথা',d:{NEU:2,MED:1}},
+ {id:'dizzy',en:'Dizziness',bn:'মাথা ঘোরা',d:{NEU:2,ENT:1,MED:1}},
+ {id:'numb',en:'Numbness or weakness',bn:'অবশ ভাব',d:{NEU:3}},
+ {id:'seizure',en:'Seizure',bn:'খিঁচুনি',d:{NEU:3}},
+ {id:'fever',en:'Fever',bn:'জ্বর',d:{MED:3,PED:1}},
+ {id:'cold',en:'Cough and cold',bn:'সর্দি-কাশি',d:{MED:2,ENT:1}},
+ {id:'throat',en:'Sore throat',bn:'গলা ব্যথা',d:{ENT:3}},
+ {id:'ear',en:'Ear pain',bn:'কানে ব্যথা',d:{ENT:3}},
+ {id:'stomach',en:'Stomach pain',bn:'পেটে ব্যথা',d:{GAS:3,MED:1}},
+ {id:'acid',en:'Acidity or gas',bn:'গ্যাস্ট্রিক',d:{GAS:3}},
+ {id:'vomit',en:'Vomiting or loose motion',bn:'বমি / ডায়রিয়া',d:{GAS:2,MED:2}},
+ {id:'rash',en:'Skin rash or itching',bn:'চুলকানি',d:{DER:3}},
+ {id:'joint',en:'Joint pain',bn:'জোড়ায় ব্যথা',d:{ORT:3}},
+ {id:'back',en:'Back pain',bn:'কোমর ব্যথা',d:{ORT:3}},
+ {id:'injury',en:'Injury or suspected fracture',bn:'আঘাত / হাড় ভাঙা',d:{ORT:3}},
+ {id:'vision',en:'Blurred vision',bn:'চোখে ঝাপসা',d:{OPH:3}},
+ {id:'redeye',en:'Red or painful eye',bn:'চোখ লাল',d:{OPH:3}},
+ {id:'preg',en:'Pregnancy care',bn:'গর্ভাবস্থার যত্ন',d:{GYN:3}},
+ {id:'period',en:'Period problems',bn:'মাসিকের সমস্যা',d:{GYN:3}},
+ {id:'kid',en:'Child is unwell',bn:'শিশু অসুস্থ',d:{PED:3,MED:1}}
+];
+const GROUPS=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+const COMPAT={'A+':['A+','A-','O+','O-'],'A-':['A-','O-'],'B+':['B+','B-','O+','O-'],'B-':['B-','O-'],'AB+':GROUPS.slice(),'AB-':['AB-','A-','B-','O-'],'O+':['O+','O-'],'O-':['O-']};
+const MEALS={'After meal':'খাবার পরে','Before meal':'খাবার আগে'};
+const DOSES=['1+0+1','1+1+1','1+0+0','0+1+0','0+0+1','1+1+0'];
+const DURS=[15,20,30,45,60];
+const durOpts=v=>DURS.map(m=>'<option value="'+m+'"'+(Number(v||30)===m?' selected':'')+'>'+m+' minutes</option>').join('');
+
+/* ---------- state + seed ---------- */
+function nextOn(days,from){for(let i=from||1;i<60;i++){const d=addDays(today(),i);if(days.includes(d.getDay()))return iso(d)}return iso(addDays(today(),1))}
+function prevOn(days,from){for(let i=from||3;i<80;i++){const d=addDays(today(),-i);if(days.includes(d.getDay()))return iso(d)}return iso(addDays(today(),-7))}
+const H=h=>h*60;
+const S={
+ user:null,remember:true,next:null,auth:{mode:'login',role:'patient'},profEdit:false,authOpen:false,pendingPhoto:'',
+ admin:{id:'ADMIN',name:'System Administrator',title:'Hospital administrator',email:'admin@careflow.demo',phone:'+880 1700-000001',photo:''},
+ accounts:[],
+ tabs:{dash:'',blood:'find',prof:'details'},
+ doctors:[
+  {id:'D-001',name:'Dr. Rahman',spec:'Cardiologist',dept:'CAR',qual:'MBBS, MD (Cardiology)',exp:10,fee:800,days:[0,2],from:H(17),to:H(20),dur:20,status:'Active',reg:'A-54321'},
+  {id:'D-002',name:'Dr. Karim',spec:'Neurologist',dept:'NEU',qual:'MBBS, MD (Neurology)',exp:8,fee:700,days:[1,3],from:H(16),to:H(19),dur:30,status:'Active',reg:'A-61207'},
+  {id:'D-003',name:'Dr. Nusrat Jahan',spec:'Gynecologist',dept:'GYN',qual:'MBBS, FCPS (Gynecology)',exp:12,fee:600,days:[6,4],from:H(10),to:H(13),dur:30,status:'Active',reg:'A-48892'},
+  {id:'D-004',name:'Dr. Anwar Hossain',spec:'General Physician',dept:'MED',qual:'MBBS, MD (Medicine)',exp:15,fee:500,days:[0,1,2,3,4],from:H(9),to:H(12),dur:20,status:'Active',reg:'A-33410'},
+  {id:'D-005',name:'Dr. Farhana Akter',spec:'Pediatrician',dept:'PED',qual:'MBBS, DCH',exp:9,fee:600,days:[0,3],from:H(15),to:H(18),dur:20,status:'Active',reg:'A-57120'},
+  {id:'D-006',name:'Dr. Mahbub Alam',spec:'Orthopedic Surgeon',dept:'ORT',qual:'MBBS, MS (Orthopedics)',exp:11,fee:700,days:[1,4],from:H(17),to:H(20),dur:30,status:'Active',reg:'A-52044'},
+  {id:'D-007',name:'Dr. Shirin Sultana',spec:'Skin Specialist',dept:'DER',qual:'MBBS, DDV',exp:7,fee:600,days:[2,6],from:H(16),to:H(19),dur:20,status:'Active',reg:'A-63318'},
+  {id:'D-008',name:'Dr. Tanvir Ahmed',spec:'ENT Specialist',dept:'ENT',qual:'MBBS, DLO',exp:6,fee:600,days:[6,1],from:H(10),to:H(13),dur:20,status:'Active',reg:'A-65501'},
+  {id:'D-009',name:'Dr. Rafiq Islam',spec:'Gastroenterologist',dept:'GAS',qual:'MBBS, MD (Gastroenterology)',exp:13,fee:800,days:[4,6],from:H(17),to:H(20),dur:30,status:'Active',reg:'A-50176'},
+  {id:'D-010',name:'Dr. Meher Nigar',spec:'Eye Specialist',dept:'OPH',qual:'MBBS, DO',exp:10,fee:600,days:[0,2],from:H(10),to:H(13),dur:20,status:'Active',reg:'A-55927'},
+  {id:'D-011',name:'Dr. Imran Hossain',spec:'Cardiologist',dept:'CAR',qual:'MBBS, MD (Cardiology)',exp:5,fee:700,days:[1,3],from:H(10),to:H(13),dur:20,status:'On leave',reg:'A-70418'}
+ ],
+ patients:[
+  {id:'P-1001',name:'Nasrin Akter',dob:'1992-04-18',gender:'Female',blood:'B+',phone:'+880 1711-000101',address:'Basuniapatty, Dinajpur',emg:'Rafiq Akter (husband) · +880 1811-000102',history:[{date:'2025-11-03',text:'Seasonal viral fever, treated as outpatient.'},{date:'2024-06-12',text:'Mild gastritis, advised diet changes.'}],reports:[{date:'2025-11-03',name:'Complete blood count',result:'Within normal range'},{date:'2024-06-12',name:'Upper abdomen ultrasound',result:'No abnormality detected'}]},
+  {id:'P-1002',name:'Jahangir Alam',dob:'1968-09-02',gender:'Male',blood:'O+',phone:'+880 1712-000203',address:'Maharajganj, Dinajpur',emg:'Shamima Alam (wife) · +880 1812-000204',history:[{date:'2019-03-21',text:'Hypertension diagnosed, on regular medication.'}],reports:[{date:'2026-08-10',name:'ECG',result:'Normal sinus rhythm'}]},
+  {id:'P-1003',name:'Rokeya Begum',dob:'1979-01-25',gender:'Female',blood:'A+',phone:'+880 1713-000305',address:'Chehelgazi, Dinajpur',emg:'Mizanur Rahman (son) · +880 1813-000306',history:[{date:'2023-02-14',text:'Type 2 diabetes, diet controlled.'}],reports:[]},
+  {id:'P-1004',name:'Shafiqul Islam',dob:'1985-07-30',gender:'Male',blood:'AB+',phone:'+880 1714-000407',address:'Birganj, Dinajpur',emg:'Aklima Islam (sister) · +880 1814-000408',history:[{date:'2022-10-05',text:'Recurring migraine episodes.'}],reports:[]},
+  {id:'P-1005',name:'Mim Sultana',dob:'1998-12-09',gender:'Female',blood:'O-',phone:'+880 1715-000509',address:'Kaharol, Dinajpur',emg:'Nur Mohammad (father) · +880 1815-000510',history:[{date:'2026-07-02',text:'Pregnancy follow-up, second trimester.'}],reports:[]}
+ ],
+ appts:[],rx:[],
+ donors:[],bloodReq:[],reports:[],
+ df:{q:'',dept:'',day:'',active:true},
+ care:{sel:new Set(),child:false},
+ book:{doc:'',date:'',min:null,name:'',phone:'',reason:'',err:'',done:null,pre:false},
+ blood:{group:'',compat:true,loc:'',avail:false},
+ verifyQ:'',af:{status:''},
+ rxs:{appt:null,rows:[],note:''}
+};
+(function seed(){
+ const D=id=>S.doctors.find(d=>d.id===id);
+ const A=(id,pid,d,min,date,reason,status,paid)=>{const p=S.patients.find(x=>x.id===pid);S.appts.push({id:id,patientId:pid,patientName:p.name,phone:p.phone,doctorId:d,date:date,min:min,reason:reason,status:status,paid:!!paid})};
+ A('AP-1001','P-1001','D-004',H(9)+40,prevOn(D('D-004').days,10),'Fever and body ache','Completed',true);
+ A('AP-1002','P-1001','D-001',H(17)+20,nextOn(D('D-001').days),'Chest tightness when climbing stairs','Approved');
+ A('AP-1003','P-1002','D-001',H(17),nextOn(D('D-001').days),'Routine blood pressure review','Pending');
+ A('AP-1004','P-1003','D-001',H(18),nextOn(D('D-001').days,3),'Palpitations at night','Pending');
+ A('AP-1005','P-1004','D-002',H(16),nextOn(D('D-002').days),'Migraine follow-up','Approved');
+ A('AP-1006','P-1005','D-003',H(10)+30,nextOn(D('D-003').days),'Second trimester check-up','Pending');
+ A('AP-1007','P-1002','D-001',H(17)+40,prevOn(D('D-001').days,5),'High blood pressure readings','Completed',false);
+ A('AP-1008','P-1003','D-005',H(15)+20,prevOn(D('D-005').days,12),'Child vaccination advice','Completed',true);
+ S.rx.push({id:'RX-1001',apptId:'AP-1001',patientId:'P-1001',doctorId:'D-004',date:S.appts[0].date,note:'Rest, plenty of fluids. Return if fever lasts beyond 3 days.',items:[{med:'Paracetamol 500mg',dose:'1+0+1',timing:'After meal',days:5},{med:'Omeprazole 20mg',dose:'1+0+0',timing:'Before meal',days:7}]});
+ const ds=n=>n==null?null:iso(addDays(today(),-n));
+ [['B-01','Md. Saju Rana','O+','+880 1712-345678','Dinajpur',120,true],['B-02','Md. Erad Mia','B+','+880 1812-345678','Rangpur',30,true],
+  ['B-03','Tanvir Hasan','A+','+880 1713-345601','Dinajpur',200,true],['B-04','Sumaiya Khatun','O-','+880 1713-345602','Saidpur',150,true],
+  ['B-05','Rakib Hossain','B-','+880 1713-345603','Dinajpur',95,true],['B-06','Anika Tabassum','AB+','+880 1713-345604','Rangpur',60,true],
+  ['B-07','Shuvo Das','A-','+880 1713-345605','Thakurgaon',140,true],['B-08','Parvez Mia','O+','+880 1713-345606','Nilphamari',100,true],
+  ['B-09','Lipi Rani','B+','+880 1713-345607','Dinajpur',180,false],['B-10','Habibur Rahman','AB-','+880 1713-345608','Bogura',130,true],
+  ['B-11','Mithun Roy','A+','+880 1713-345609','Dinajpur',40,true]
+ ].forEach(r=>S.donors.push({id:r[0],name:r[1],group:r[2],phone:r[3],loc:r[4],last:ds(r[5]),verified:r[6]}));
+ S.bloodReq.push({id:'BR-1001',group:'A+',units:2,loc:'Dinajpur',hospital:'CareFlow Hospital',contact:'Rafiq Akter',phone:'+880 1811-000102',note:'Needed within 24 hours for surgery.',date:iso(today()),status:'Open'});
+ S.bloodReq.push({id:'BR-1002',group:'O-',units:1,loc:'Rangpur',hospital:'Rangpur city hospital',contact:'Sabbir Ahmed',phone:'+880 1811-000220',note:'Thalassemia patient, regular transfusion.',date:iso(addDays(today(),-1)),status:'Open'});
+ S.reports.push({id:'RP-1001',name:'Fake Doctor (Suspect)',reg:'Invalid',spec:'General Practitioner',place:'Unnamed clinic, bus stand area',details:'Prescribed antibiotics without examining the patient. No registration number displayed.',date:iso(addDays(today(),-2)),status:'Under review'});
+ S.reports.push({id:'RP-1002',name:'Dr. Mizan (Skin and VD)',reg:'A-00000',spec:'Skin specialist',place:'Private chamber, Station Road',details:'Registration number on the signboard does not match any record.',date:iso(addDays(today(),-1)),status:'Under review'});
+})();
+
+/* ---------- accounts + saved data ---------- */
+(function accounts(){
+ const mail=n=>n.replace(/^Dr\.?\s*/i,'').split(/\s+/)[0].toLowerCase()+'@careflow.demo';
+ S.accounts.push({email:'admin@careflow.demo',pw:'demo1234',role:'admin',ref:'ADMIN'});
+ S.doctors.forEach(d=>{d.email=mail(d.name);d.phone='';d.bio='';d.photo='';S.accounts.push({email:d.email,pw:'demo1234',role:'doctor',ref:d.id})});
+ S.patients.forEach(p=>{p.email=mail(p.name);p.photo='';S.accounts.push({email:p.email,pw:'demo1234',role:'patient',ref:p.id})});
+ S.doctors[0].phone='+880 1711-100001';
+ S.doctors[0].bio='Heart specialist with a focus on blood pressure, chest pain and long-term cardiac care. Chamber open on Sunday and Tuesday evenings.';
+})();
+const KEY='careflow.saved.v2';
+function save(){
+ try{localStorage.setItem(KEY,JSON.stringify({doctors:S.doctors,patients:S.patients,accounts:S.accounts,admin:S.admin,remember:S.remember,user:S.remember?S.user:null}))}catch(e){}
+}
+(function load(){
+ try{
+  const j=JSON.parse(localStorage.getItem(KEY)||'null');
+  if(!j||!Array.isArray(j.doctors)||!Array.isArray(j.patients)||!Array.isArray(j.accounts)||!j.admin)return;
+  S.doctors=j.doctors;S.patients=j.patients;S.accounts=j.accounts;S.admin=j.admin;S.remember=j.remember!==false;S.user=j.user||null;
+ }catch(e){}
+})();
+function ent(u){u=u||S.user;if(!u)return null;return u.role==='doctor'?S.doctors.find(d=>d.id===u.id):u.role==='patient'?S.patients.find(p=>p.id===u.id):S.admin}
+const acctOf=u=>S.accounts.find(a=>a.role===u.role&&a.ref===u.id);
+
+/* ---------- lookups ---------- */
+const docById=id=>S.doctors.find(d=>d.id===id);
+const docName=id=>{const d=docById(id);return d?d.name:'Removed doctor'};
+const patById=id=>S.patients.find(p=>p.id===id);
+const durOf=d=>Number(d.dur)||30;
+const availStr=d=>d.days.slice().sort((a,b)=>a-b).map(x=>DAYS[x]).join(' & ')+' · '+hh(d.from)+' – '+hh(d.to);
+const slotsOf=d=>{const r=[],st=durOf(d);for(let m=d.from;m+st<=d.to;m+=st)r.push(m);return r};
+function openDates(d,n){const out=[],now=new Date(),nm=now.getHours()*60+now.getMinutes();for(let i=0;i<40&&out.length<(n||6);i++){const dt=addDays(today(),i);if(!d.days.includes(dt.getDay()))continue;if(i===0&&nm>d.to-durOf(d))continue;out.push(iso(dt))}return out}
+const isTaken=(id,date,min)=>S.appts.some(a=>a.doctorId===id&&a.date===date&&a.min===min&&a.status!=='Cancelled');
+const isPast=(date,min)=>{if(date!==iso(today()))return false;const n=new Date();return min<=n.getHours()*60+n.getMinutes()};
+function nextFree(d){const ds=openDates(d,6);for(let i=0;i<ds.length;i++){const sl=slotsOf(d);for(let k=0;k<sl.length;k++){if(!isTaken(d.id,ds[i],sl[k])&&!isPast(ds[i],sl[k]))return{date:ds[i],min:sl[k]}}}return null}
+const nextLabel=d=>{const n=nextFree(d);return n?fmtDate(n.date)+', '+t12(n.min):'No free slot soon'};
+const daysSince=d=>d.last?Math.round((today()-parse(d.last))/864e5):null;
+const isAvail=d=>d.last==null||daysSince(d)>=90;
+function agoLabel(d){const n=daysSince(d);if(n==null)return 'Never';if(n<1)return 'Today';if(n<30)return n+' day'+(n>1?'s':'')+' ago';const m=Math.floor(n/30);return m+' month'+(m>1?'s':'')+' ago'}
+const nextId=(p,arr,start)=>{let n=start;arr.forEach(x=>{const k=parseInt(String(x.id).replace(/\D/g,''),10);if(k>=n)n=k+1});return p+'-'+n};
+
+/* ---------- ui helpers ---------- */
+let toastT;
+function toast(m,ms){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},ms||2800)}
+function openModal(html,cls){const b=$('#modal-body');b.className='modal-box'+(cls?' '+cls:'');b.innerHTML=html;$('#modal').hidden=false;const f=$('#modal-body input,#modal-body select,#modal-body textarea,#modal-body button');if(f)f.focus()}
+function closeModal(keep){
+ $('#modal').hidden=true;$('#modal-body').innerHTML='';
+ if(!keep&&S.authOpen){S.authOpen=false;S.next=null;if(!S.user&&/^#(login|dashboard|profile)$/.test(location.hash))location.hash='home'}
+}
+const tabsHtml=(scope,items,active)=>'<div class="tabs" role="tablist">'+items.map(i=>'<button type="button" role="tab" aria-selected="'+(i[0]===active)+'" data-act="tab" data-scope="'+scope+'" data-tab="'+i[0]+'">'+esc(i[1])+'</button>').join('')+'</div>';
+const STEPS=['Pending','Approved','Completed'];
+function tracker(st){if(st==='Cancelled')return pill('Cancelled');const i=STEPS.indexOf(st);return '<ol class="track" aria-label="Appointment status">'+STEPS.map((s,k)=>'<li class="'+(k<=i?'on':'')+'">'+s+'</li>').join('')+'</ol>'}
+
+/* doctor is verified unless explicitly flagged false (self-registered doctors start unverified) */
+const bm=d=>d.verified===false?'<span class="pill warn">Not yet verified</span>':'<span class="pill ok">'+ico('shield',14)+'BMDC '+esc(d.reg)+'</span>';
+function docCard(d){
+ const act=d.status==='Active';
+ return '<article class="card doc"><div class="doc-top">'+av(d)+'<div><h3>'+esc(d.name)+'</h3><p class="muted">'+esc(d.spec)+' · '+esc(dept(d.dept).n)+'</p></div></div>'+
+ '<dl class="kv"><div><dt>Qualification</dt><dd>'+esc(d.qual)+'</dd></div><div><dt>Experience</dt><dd>'+d.exp+' years</dd></div><div class="wide"><dt>Available</dt><dd>'+esc(availStr(d))+'</dd></div><div><dt>Fee</dt><dd>'+money(d.fee)+'</dd></div><div><dt>Time per visit</dt><dd>'+durOf(d)+' minutes</dd></div></dl>'+
+ (d.bio?'<p class="muted bio">'+esc(d.bio)+'</p>':'')+(act?'<div class="doc-next">'+ico('clock',16)+'<span>Next free: <strong>'+esc(nextLabel(d))+'</strong></span></div>':'')+
+ '<div class="doc-foot">'+pill(d.status)+bm(d)+'<span style="flex:1"></span>'+
+ (act?'<button type="button" class="btn btn-primary btn-sm" data-act="book" data-id="'+d.id+'">Book '+ico('arrow',16)+'</button>':'<button type="button" class="btn btn-sm" disabled>Not taking bookings</button>')+'</div></article>';
+}
+
+/* ---------- views ---------- */
+const views={};
+
+views.home=()=>{
+ const d1=docById('D-001')||S.doctors.find(d=>d.status==='Active'),avail=S.donors.filter(isAvail).length;
+ const quick=[['fever','Fever'],['chest','Chest pain'],['head','Headache'],['stomach','Stomach pain'],['rash','Skin rash'],['kid','Child is unwell']];
+ const nf=d1?nextFree(d1):null;
+ const feat=S.doctors.filter(d=>d.status==='Active').slice(0,4);
+ const nDoc=S.doctors.filter(d=>d.status==='Active').length;
+ const why=[['cal','Real free slots','Every time you see is a genuinely open slot, sized to the doctor\'s consultation time. No double booking.'],
+  ['shield','Verified doctors','BMDC registration is shown on every profile, and new doctors stay marked unverified until an admin checks them.'],
+  ['doc','Records that stay with you','Prescriptions, visit history and reports are kept in your patient dashboard, ready for the next visit.'],
+  ['drop','Blood in an emergency','Search donors by group and area. Donors are marked on rest period for 3 months after giving blood.']];
+ const faq=[['How do I book an appointment?','Choose a doctor, pick a day, then pick a free time. Your request is saved as Pending. The doctor or admin approves it, and after the visit it becomes Completed.'],
+  ['How long is one consultation?','Each doctor has a fixed time per visit, such as 20 or 30 minutes. It is shown on the doctor card and the booking page, and the free times are cut to that length.'],
+  ['Do I need an account to book?','You can send a request without one, but with a patient account you can track the status, see prescriptions and keep your history.'],
+  ['What if I have an emergency?','Call 999 or go to the nearest emergency department. The symptom checker and online booking are not for emergencies.'],
+  ['How can I check that a doctor is real?','Open Verify a doctor, type the name or BMDC number, and see whether they are on the verified list. Report anyone who looks suspicious.'],
+  ['Is the symptom checker a diagnosis?','No. It only suggests which department to visit first. A doctor makes the diagnosis.']];
+ return '<section class="hero"><div class="wrap hero-grid"><div>'+
+ '<p class="eyebrow">Hospital care, organised · সমন্বিত চিকিৎসা সেবা</p>'+
+ '<h1>Find the right doctor before you leave home.</h1>'+
+ '<p class="lead">Tell us what you feel, see which doctors are free soonest, and book a slot without standing in a queue. Prescriptions and medical history stay with you online.</p>'+
+ '<div class="quick" role="group" aria-label="Common reasons for a visit">'+quick.map(q=>'<button type="button" class="chip" data-act="quick" data-s="'+q[0]+'">'+q[1]+'</button>').join('')+'</div>'+
+ '<div class="cta-row"><a class="btn btn-primary btn-lg" href="#care">Check my symptoms '+ico('arrow')+'</a><a class="btn btn-lg" href="#book">Book appointment</a></div>'+
+ '<div class="trust"><span>'+ico('shield',18)+'BMDC-verified doctors</span><span>'+ico('clock',18)+'Emergency 24/7</span><span>'+ico('lock',18)+'Your records stay private</span></div></div>'+
+ (d1&&d1.status==='Active'?'<aside class="tag" aria-label="Example triage note"><div class="tag-head mono"><span>TRIAGE NOTE</span><span>SAMPLE</span></div><dl class="tag-rows">'+
+ '<div><dt>Symptoms</dt><dd>Chest pain on exertion, breathlessness</dd></div>'+
+ '<div><dt>Go to</dt><dd><strong>Cardiology</strong> <span class="bn">· হৃদরোগ বিভাগ</span></dd></div>'+
+ '<div><dt>Doctor</dt><dd>'+esc(d1.name)+', '+esc(d1.spec)+' · '+d1.exp+' years</dd></div>'+
+ '<div><dt>Next free slot</dt><dd class="mono">'+(nf?esc(fmtDate(nf.date))+', '+t12(nf.min):'—')+'</dd></div>'+
+ '<div><dt>Visit</dt><dd>'+durOf(d1)+' min · '+money(d1.fee)+'</dd></div></dl>'+
+ '<p class="tag-warn">Severe or spreading chest pain is an emergency. Call 999 first.</p>'+
+ '<button type="button" class="btn btn-primary" data-act="book" data-id="'+d1.id+'"'+(nf?' data-d="'+nf.date+'" data-m="'+nf.min+'"':'')+'>Book this slot</button></aside>':'')+'</div></section>'+
+ '<section class="band" aria-label="CareFlow at a glance"><div class="wrap band-grid"><div><b>'+nDoc+'</b><span>Doctors taking bookings</span></div><div><b>'+DEPTS.length+'</b><span>Departments</span></div><div><b>'+S.patients.length+'</b><span>Registered patients</span></div><div><b>'+avail+'</b><span>Blood donors available now</span></div></div></section>'+
+ '<section class="wrap sec"><div class="strip">'+
+ '<a class="em" href="tel:999"><strong>'+ico('phone',20)+'Medical emergency? Call 999</strong><span>National emergency line. Our emergency desk (sample): <span class="mono">+880 1700-000999</span></span></a>'+
+ '<a href="#blood"><strong>'+ico('drop',20)+'Need blood urgently?</strong><span>'+avail+' donors are available right now. Search by group and area.</span></a>'+
+ '<a href="#verify"><strong>'+ico('shield',20)+'Check a doctor</strong><span>Look up a BMDC registration number or report a suspected fake.</span></a></div></section>'+
+ '<section class="wrap sec"><div class="sec-head"><div><p class="eyebrow">How it works</p><h2>From symptom to prescription</h2></div></div><ol class="steps">'+
+ '<li><h3>Describe symptoms</h3><p>Pick what you feel in English or Bangla. We rank the departments that fit.</p></li>'+
+ '<li><h3>Choose a doctor</h3><p>Filter by specialty, day and time. Verified registration is shown on every profile.</p></li>'+
+ '<li><h3>Book a slot</h3><p>Reserve a time. The status moves from Pending to Approved to Completed.</p></li>'+
+ '<li><h3>Keep your records</h3><p>Prescriptions and visit history are saved in your patient dashboard.</p></li></ol></section>'+
+ '<section class="wrap sec"><div class="sec-head"><div><p class="eyebrow">Departments · বিভাগসমূহ</p><h2>Where do you need to go?</h2></div></div><div class="grid">'+
+ DEPTS.map(d=>{const n=S.doctors.filter(x=>x.dept===d.c&&x.status==='Active').length;return '<button type="button" class="dept" data-act="dept" data-c="'+d.c+'"><span class="code">'+d.c+'</span><span><b>'+esc(d.n)+'</b><small>'+esc(d.bn)+' · '+n+' doctor'+(n===1?'':'s')+'</small></span></button>'}).join('')+'</div></section>'+
+ '<section class="wrap sec"><div class="sec-head"><div><p class="eyebrow">Featured doctors</p><h2>Seeing patients this week</h2></div><a class="btn" href="#doctors">All doctors '+ico('arrow',16)+'</a></div><div class="grid grid-doc">'+feat.map(docCard).join('')+'</div></section>'+
+ '<section class="wrap sec"><div class="sec-head"><div><p class="eyebrow">Why CareFlow</p><h2>Built for patients and for the hospital</h2></div></div><div class="why">'+why.map(w=>'<div class="card"><span class="dot">'+ico(w[0],22)+'</span><h3>'+w[1]+'</h3><p class="muted">'+w[2]+'</p></div>').join('')+'</div></section>'+
+ '<section class="wrap sec"><div class="sec-head"><div><p class="eyebrow">Services</p><h2>Open around the clock</h2></div></div><div class="grid">'+
+ [['Emergency care','24 hours, every day'],['Outpatient (OPD)','Doctor-wise appointments'],['Pathology and diagnostics','Reports saved to your record'],['Pharmacy','Prescriptions in a readable format'],['Ambulance','Call the emergency desk'],['Emergency blood donor hub','Find donors by group and area']].map(s=>'<div class="card"><h3>'+s[0]+'</h3><p class="muted">'+s[1]+'</p></div>').join('')+'</div></section>'+
+ '<section class="wrap sec"><div class="sec-head"><div><p class="eyebrow">FAQ</p><h2>Common questions</h2></div></div><div class="faq">'+faq.map(q=>'<details><summary>'+q[0]+'</summary><p>'+q[1]+'</p></details>').join('')+'</div></section>'+
+ '<section class="wrap sec"><div class="card"><div class="split" style="align-items:center"><div class="stack"><p class="eyebrow" style="margin:0">Location and support</p><h2>Visit or call, any hour</h2>'+
+ '<p class="muted">Sample details for this prototype. Replace them with the hospital\'s own.</p></div><div class="stack">'+
+ '<div class="row">'+ico('pin',20)+'<span>CareFlow Hospital, Station Road, Dinajpur </span></div>'+
+ '<div class="row">'+ico('phone',20)+'<span class="mono">+880 1700-000999</span><span class="muted">emergency desk</span></div>'+
+ '<div class="row">'+ico('clock',20)+'<span>Emergency 24/7 · OPD hours follow each doctor\'s schedule</span></div>'+
+ '<div><a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Dinajpur+Sadar">Open in Google Maps '+ico('arrow',16)+'</a></div></div></div></div></section>';
+};
+
+views.care=()=>{
+ const c=S.care;
+ return '<section class="wrap page"><header class="page-head"><p class="eyebrow">Symptom-to-hospital guidance · লক্ষণ অনুযায়ী নির্দেশনা</p><h1>What are you feeling?</h1>'+
+ '<p class="lead">Pick everything that applies. We suggest the department and show doctors who are free soonest.</p></header>'+
+ '<div class="split"><div class="card stack"><div class="field"><label for="sym-q">Search symptoms</label><input id="sym-q" type="search" placeholder="Type fever, জ্বর, headache…" data-live="symq" autocomplete="off"></div>'+
+ '<div class="sym" id="sym-list" role="group" aria-label="Symptoms">'+SYMP.map(s=>'<button type="button" class="chip" data-act="sym" data-id="'+s.id+'" data-t="'+esc((s.en+' '+s.bn).toLowerCase())+'" aria-pressed="'+c.sel.has(s.id)+'">'+esc(s.en)+'<span class="bn">'+esc(s.bn)+'</span></button>').join('')+'</div>'+
+ '<label class="check"><input type="checkbox" data-bind="care:child" data-live="care" '+(c.child?'checked':'')+'> The patient is under 12 years old</label>'+
+ '<div><button type="button" class="btn btn-sm" data-act="sym-clear">Clear all</button></div></div>'+
+ '<div id="care-out" aria-live="polite"></div></div></section>';
+};
+function redFlags(sel){const f=[],h=x=>sel.has(x);
+ if(h('chest')&&(h('breath')||h('palp')))f.push('Chest pain with breathlessness or a racing heartbeat can be a heart emergency.');
+ if(h('seizure'))f.push('A seizure needs urgent medical attention.');
+ if(h('numb'))f.push('Sudden numbness or weakness can be a sign of stroke.');
+ if(h('injury'))f.push('A suspected fracture should be seen urgently. Keep the injured part still.');
+ return f}
+function fillCare(){
+ const c=S.care,out=$('#care-out');if(!out)return;
+ if(!c.sel.size){out.innerHTML='<div class="empty"><strong>Your result appears here</strong><span>Select one or more symptoms on the left. For example, fever with cough points to General Medicine first.</span></div>';return}
+ const sc={};c.sel.forEach(id=>{const s=SYMP.find(x=>x.id===id);Object.keys(s.d).forEach(k=>{sc[k]=(sc[k]||0)+s.d[k]})});
+ if(c.child)sc.PED=(sc.PED||0)+3;
+ const rank=Object.keys(sc).sort((a,b)=>sc[b]-sc[a]).slice(0,3),top=sc[rank[0]]||1;
+ const flags=redFlags(c.sel);
+ let h='';
+ if(flags.length)h+='<div class="alert-box" role="alert"><h3>'+ico('alert',20)+' This may be urgent</h3><ul>'+flags.map(f=>'<li>'+f+'</li>').join('')+'</ul><p><strong>Go to the nearest emergency department now, or call 999.</strong></p><div><a class="btn btn-danger" href="tel:999">Call 999</a></div></div>';
+ h+='<div class="res">'+rank.map((k,i)=>{
+  const key=d=>{const x=nextFree(d);return x?x.date+' '+pad(Math.floor(x.min/60))+':'+pad(x.min%60):'9999'};
+  const docs=S.doctors.filter(d=>d.dept===k&&d.status==='Active').sort((a,b)=>key(a)<key(b)?-1:1).slice(0,2);
+  const dp=dept(k);
+  return '<div class="card stack"><div class="row-between"><div><p class="eyebrow" style="margin:0 0 4px">'+(i===0?'Best match':'Also consider')+'</p><h3>'+esc(dp.n)+' <span class="bn">'+esc(dp.bn)+'</span></h3></div><span class="mono">'+Math.round(sc[k]/top*100)+'%</span></div>'+
+  '<div class="bar" aria-hidden="true"><i style="width:'+Math.round(sc[k]/top*100)+'%"></i></div>'+
+  (docs.length?docs.map(d=>'<div class="res-doc"><div><strong>'+esc(d.name)+'</strong><br><span class="muted">'+esc(d.spec)+' · '+durOf(d)+' min · next '+esc(nextLabel(d))+'</span></div><button type="button" class="btn btn-primary btn-sm" data-act="book" data-id="'+d.id+'">Book</button></div>').join(''):'<p class="muted">No doctor is taking bookings in this department right now. Please call the emergency desk.</p>')+'</div>'}).join('')+
+ '<p class="hint">This is guidance to help you choose a department. It is not a diagnosis. If you feel very unwell, go to the emergency department.</p></div>';
+ out.innerHTML=h;
+}
+
+views.doctors=()=>{
+ const f=S.df;
+ return '<section class="wrap page"><header class="page-head"><p class="eyebrow">Doctor search · ডাক্তার খুঁজুন</p><h1>Doctors and schedules</h1><p class="lead">Filter by specialty, department or the day you can come. Check the time before you book.</p></header>'+
+ '<div class="card" style="margin-bottom:20px"><div class="form-grid">'+
+ '<div class="field"><label for="df-q">Name or specialty</label><input id="df-q" type="search" value="'+esc(f.q)+'" placeholder="e.g. Cardiologist" data-bind="df:q" data-live="docs" autocomplete="off"></div>'+
+ '<div class="field"><label for="df-d">Department</label><select id="df-d" data-bind="df:dept" data-live="docs"><option value="">All departments</option>'+DEPTS.map(d=>'<option value="'+d.c+'"'+(f.dept===d.c?' selected':'')+'>'+esc(d.n)+'</option>').join('')+'</select></div>'+
+ '<div class="field"><label for="df-day">Available on</label><select id="df-day" data-bind="df:day" data-live="docs"><option value="">Any day</option>'+DAYS.map((d,i)=>'<option value="'+i+'"'+(f.day===String(i)?' selected':'')+'>'+d+'</option>').join('')+'</select></div>'+
+ '<div class="field"><span class="lbl">Status</span><label class="check" style="min-height:44px"><input type="checkbox" data-bind="df:active" data-live="docs"'+(f.active?' checked':'')+'> Only doctors taking bookings</label></div></div></div>'+
+ '<div id="doc-out"></div></section>';
+};
+function fillDocs(){
+ const f=S.df,q=f.q.trim().toLowerCase(),out=$('#doc-out');if(!out)return;
+ const l=S.doctors.filter(d=>(!f.dept||d.dept===f.dept)&&(f.day===''||d.days.includes(+f.day))&&(!f.active||d.status==='Active')&&(!q||(d.name+' '+d.spec+' '+dept(d.dept).n+' '+d.qual).toLowerCase().includes(q)));
+ out.innerHTML=l.length?'<p class="muted count">'+l.length+' doctor'+(l.length>1?'s':'')+' found</p><div class="grid grid-doc">'+l.map(docCard).join('')+'</div>':emptyBox('No doctor matches these filters','Try a different day or clear the department filter.');
+}
+
+views.book=()=>{
+ const b=S.book,docs=S.doctors.filter(d=>d.status==='Active'),d=b.doc?docById(b.doc):null;
+ const pat=S.user&&S.user.role==='patient'?patById(S.user.id):null;
+ if(pat&&!b.pre){b.name=pat.name;b.phone=pat.phone;b.pre=true}
+ const done=b.done?S.appts.find(a=>a.id===b.done):null;
+ let left='<form class="card stack" data-form="book" novalidate><div class="form-grid">'+
+ '<div class="field"><label for="b-name">Patient name</label><input id="b-name" value="'+esc(b.name)+'" data-bind="book:name" autocomplete="name"></div>'+
+ '<div class="field"><label for="b-phone">Mobile number</label><input id="b-phone" inputmode="tel" value="'+esc(b.phone)+'" placeholder="01712-345678" data-bind="book:phone" autocomplete="tel"></div>'+
+ '<div class="field full"><label for="b-doc">Doctor</label><select id="b-doc" data-bind="book:doc" data-live="bookdoc"><option value="">Choose a doctor</option>'+docs.map(x=>'<option value="'+x.id+'"'+(b.doc===x.id?' selected':'')+'>'+esc(x.name+' · '+x.spec+' ('+dept(x.dept).n+')')+'</option>').join('')+'</select></div></div>';
+ if(d){
+  left+='<div class="field"><span class="lbl">Day <span class="hint">· '+esc(availStr(d))+'</span></span><div class="sym">'+openDates(d,6).map(dt=>'<button type="button" class="chip" aria-pressed="'+(b.date===dt)+'" data-act="pick-date" data-d="'+dt+'">'+fmtDate(dt)+'</button>').join('')+'</div></div>';
+  left+=b.date?'<div class="field"><span class="lbl">Time on '+esc(fmtDate(b.date))+' <span class="hint">· '+durOf(d)+' minutes each</span></span><div class="slots">'+slotsOf(d).map(m=>{const off=isTaken(d.id,b.date,m)||isPast(b.date,m);return '<button type="button" class="slot" '+(off?'disabled ':'')+'aria-pressed="'+(b.min===m)+'" data-act="pick-slot" data-m="'+m+'">'+t12(m)+'</button>'}).join('')+'</div><p class="hint">Struck-through times are already booked.</p></div>':'<p class="hint">Choose a day to see the free times.</p>';
+ }
+ left+='<div class="field"><label for="b-reason">Main reason for the visit</label><textarea id="b-reason" data-bind="book:reason" placeholder="e.g. Chest tightness when climbing stairs">'+esc(b.reason)+'</textarea></div>'+
+ (b.err?'<div class="err" role="alert">'+esc(b.err)+'</div>':'')+'<div><button type="submit" class="btn btn-primary btn-lg">Request appointment '+ico('arrow')+'</button></div></form>';
+ let right='';
+ if(done){const dd=docById(done.doctorId);right+='<div class="card stack"><div class="okbox">Request received. The doctor or admin will approve it shortly.</div><h3>Appointment <span class="mono">'+esc(done.id)+'</span></h3><dl class="kv"><div><dt>Patient</dt><dd>'+esc(done.patientName)+'</dd></div><div><dt>Doctor</dt><dd>'+esc(docName(done.doctorId))+'</dd></div><div><dt>Date</dt><dd>'+esc(fmtDate(done.date))+'</dd></div><div><dt>Time</dt><dd>'+t12(done.min)+(dd?' – '+t12(done.min+durOf(dd)):'')+'</dd></div><div><dt>Fee</dt><dd>'+money(dd?dd.fee:0)+'</dd></div></dl>'+tracker(done.status)+
+  '<div class="row">'+(S.user&&S.user.role==='patient'?'<button type="button" class="btn btn-primary btn-sm" data-act="go" data-to="dashboard">Open my dashboard</button>':'<a class="btn btn-sm" href="#login">Log in to track it</a>')+'<button type="button" class="btn btn-sm" data-act="book-reset">Book another</button></div></div>'}
+ else if(d){right+='<div class="card stack"><div class="doc-top">'+av(d)+'<div><h3>'+esc(d.name)+'</h3><p class="muted">'+esc(d.spec)+'</p></div></div><dl class="kv"><div><dt>Fee</dt><dd>'+money(d.fee)+'</dd></div><div><dt>Time per visit</dt><dd>'+durOf(d)+' minutes</dd></div><div><dt>Experience</dt><dd>'+d.exp+' years</dd></div><div class="wide"><dt>Schedule</dt><dd>'+esc(availStr(d))+'</dd></div></dl></div>'}
+ right+='<div class="card stack"><h3>What happens next</h3><ol class="muted" style="margin:0;padding-left:20px;display:grid;gap:6px"><li>Your request is saved as <strong>Pending</strong>.</li><li>The doctor or admin marks it <strong>Approved</strong>.</li><li>Come at your time. After the visit it becomes <strong>Completed</strong>.</li><li>The prescription appears in your patient dashboard.</li></ol></div>';
+ return '<section class="wrap page"><header class="page-head"><p class="eyebrow">Online booking · অনলাইন অ্যাপয়েন্টমেন্ট</p><h1>Book an appointment</h1><p class="lead">Pick a doctor, a day and a time. Only free slots can be chosen.</p></header><div class="split">'+left+'<div class="stack">'+right+'</div></div></section>';
+};
+
+views.blood=()=>{
+ const t=S.tabs.blood,f=S.blood;
+ const locs=Array.from(new Set(S.donors.map(d=>d.loc).concat(S.bloodReq.map(r=>r.loc)))).sort();
+ let body='';
+ if(t==='find'){
+  body='<div class="card stack" style="margin-bottom:18px"><div class="field"><span class="lbl">Blood group needed</span><div class="sym" role="group" aria-label="Blood group">'+GROUPS.map(g=>'<button type="button" class="chip" aria-pressed="'+(f.group===g)+'" data-act="bgroup" data-g="'+g+'">'+g+'</button>').join('')+'</div></div>'+
+  '<div class="form-grid"><div class="field"><label for="bl-loc">Area</label><select id="bl-loc" data-bind="blood:loc" data-live="blood"><option value="">All areas</option>'+locs.map(l=>'<option'+(f.loc===l?' selected':'')+'>'+esc(l)+'</option>').join('')+'</select></div>'+
+  '<div class="field"><span class="lbl">Options</span><label class="check"><input type="checkbox" data-bind="blood:avail" data-live="blood"'+(f.avail?' checked':'')+'> Available donors only</label>'+(f.group?'<label class="check"><input type="checkbox" data-bind="blood:compat" data-live="blood"'+(f.compat?' checked':'')+'> Include compatible groups ('+COMPAT[f.group].join(', ')+')</label>':'')+'</div></div></div><div id="blood-out"></div>';
+ } else if(t==='req'){
+  body='<div class="split"><div class="stack">'+(S.bloodReq.length?S.bloodReq.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(r=>'<div class="card req"><div class="drop" aria-hidden="true"><b>'+esc(r.group)+'</b></div><div class="stack" style="gap:4px;min-width:0"><div class="row">'+pill(r.status)+'<span class="muted">'+esc(fmtDate(r.date))+'</span></div><strong>'+r.units+' bag'+(r.units>1?'s':'')+' needed · '+esc(r.loc)+'</strong><span class="muted">'+esc(r.hospital)+(r.note?' · '+esc(r.note):'')+'</span><span>'+esc(r.contact)+' · <span class="mono">'+esc(r.phone)+'</span> <button type="button" class="btn btn-sm" data-act="copy" data-v="'+esc(r.phone)+'">'+ico('copy',14)+' Copy</button></span></div></div>').join(''):emptyBox('No requests yet','Post one if you need blood.'))+'</div>'+
+  '<form class="card stack" data-form="bloodreq" novalidate><h3>Post an urgent request</h3><div class="form-grid"><div class="field"><label for="r-g">Blood group</label><select id="r-g" name="group">'+GROUPS.map(g=>'<option>'+g+'</option>').join('')+'</select></div><div class="field"><label for="r-u">Bags needed</label><input id="r-u" name="units" type="number" min="1" max="10" value="1"></div>'+
+  '<div class="field"><label for="r-l">Area</label><input id="r-l" name="loc" list="loclist" placeholder="Dinajpur"></div><div class="field"><label for="r-h">Hospital</label><input id="r-h" name="hospital"></div><div class="field"><label for="r-c">Contact person</label><input id="r-c" name="contact"></div><div class="field"><label for="r-p">Phone</label><input id="r-p" name="phone" inputmode="tel" placeholder="01712-345678"></div><div class="field full"><label for="r-n">Note (optional)</label><input id="r-n" name="note" placeholder="When is it needed?"></div></div><div id="r-err"></div><div><button type="submit" class="btn btn-danger">Post request</button></div></form></div>';
+ } else {
+  body='<form class="card stack" data-form="donor" novalidate style="max-width:720px"><h3>Become a blood donor</h3><p class="muted">Your number is shown to people who need blood. An admin verifies every new donor.</p><div class="form-grid"><div class="field"><label for="d-n">Full name</label><input id="d-n" name="name" autocomplete="name"></div><div class="field"><label for="d-g">Blood group</label><select id="d-g" name="group">'+GROUPS.map(g=>'<option>'+g+'</option>').join('')+'</select></div><div class="field"><label for="d-p">Phone</label><input id="d-p" name="phone" inputmode="tel" placeholder="01712-345678"></div><div class="field"><label for="d-l">Area</label><input id="d-l" name="loc" list="loclist" placeholder="Dinajpur"></div>'+
+  '<div class="field full"><label for="d-d">Last donated</label><select id="d-d" name="last"><option value="">Never donated</option><option value="15">Within the last month</option><option value="60">1 to 3 months ago</option><option value="135">3 to 6 months ago</option><option value="240">More than 6 months ago</option></select></div></div><div id="d-err"></div><div><button type="submit" class="btn btn-primary">Register as donor</button></div></form>';
+ }
+ return '<section class="wrap page"><header class="page-head"><p class="eyebrow">Emergency blood donor hub · জরুরি রক্তদাতা</p><h1>Find blood, fast.</h1><p class="lead">Donors rest for 3 months between donations, so each profile shows whether they can give right now.</p></header>'+
+ tabsHtml('blood',[['find','Find donors'],['req','Urgent requests ('+S.bloodReq.filter(r=>r.status==='Open').length+')'],['join','Become a donor']],t)+body+'<datalist id="loclist">'+locs.map(l=>'<option value="'+esc(l)+'">').join('')+'</datalist></section>';
+};
+function fillBlood(){
+ const f=S.blood,out=$('#blood-out');if(!out)return;
+ let l=S.donors.slice();
+ if(f.group){const ok=f.compat?COMPAT[f.group]:[f.group];l=l.filter(d=>ok.includes(d.group))}
+ if(f.loc)l=l.filter(d=>d.loc===f.loc);
+ if(f.avail)l=l.filter(isAvail);
+ l.sort((a,b)=>(isAvail(b)-isAvail(a))||((daysSince(b)||999)-(daysSince(a)||999)));
+ if(!l.length){out.innerHTML=emptyBox('No donor matches yet','Try all areas or include compatible groups. You can also post an urgent request.');return}
+ out.innerHTML='<p class="muted count">'+l.length+' donor'+(l.length>1?'s':'')+' · '+l.filter(isAvail).length+' available now</p><div class="scroll"><table class="tbl"><thead><tr><th>Donor</th><th>Group</th><th>Phone</th><th>Area</th><th>Last donated</th><th>Status</th></tr></thead><tbody>'+
+ l.map(d=>{const av=isAvail(d);return '<tr><td><strong>'+esc(d.name)+'</strong>'+(d.verified?'':'<br>'+pill('Unverified'))+'</td><td><span class="pill bad">'+esc(d.group)+'</span></td><td><span class="mono">'+esc(d.phone)+'</span><br><button type="button" class="btn btn-sm" style="margin-top:6px" data-act="copy" data-v="'+esc(d.phone)+'">'+ico('copy',14)+' Copy</button></td><td>'+esc(d.loc)+'</td><td>'+esc(agoLabel(d))+'</td><td>'+pill(av?'Available':'Rest period')+(av?'':'<br><span class="hint">Again '+esc(fmtDate(iso(addDays(parse(d.last),90))))+'</span>')+'</td></tr>'}).join('')+'</tbody></table></div>';
+}
+
+views.verify=()=>{
+ const n=S.reports.filter(r=>r.status==='Under review').length;
+ return '<section class="wrap page"><header class="page-head"><p class="eyebrow">Fake doctor reporting · ভুয়া ডাক্তার রিপোর্ট</p><h1>Is your doctor registered?</h1><p class="lead">Check a name or BMDC registration number against our verified list. If something looks wrong, report it. An admin reviews every report before anything is published.</p></header>'+
+ '<div class="split"><div class="stack"><div class="card stack"><div class="field"><label for="v-q">Doctor name or BMDC number</label><input id="v-q" type="search" value="'+esc(S.verifyQ)+'" placeholder="e.g. A-54321" data-live="verify" autocomplete="off"></div><div id="verify-out" aria-live="polite"></div></div>'+
+ '<div class="stack"><h3>Doctors on CareFlow</h3><div class="scroll"><table class="tbl"><thead><tr><th>Doctor</th><th>BMDC reg. no.</th><th>Specialty</th><th>Status</th></tr></thead><tbody>'+S.doctors.map(d=>'<tr><td><strong>'+esc(d.name)+'</strong></td><td class="mono">'+esc(d.reg)+'</td><td>'+esc(d.spec)+'</td><td>'+(d.verified===false?pill('Unverified'):'<span class="pill ok">'+ico('check',13)+'Verified</span>')+'</td></tr>').join('')+'</tbody></table></div></div></div>'+
+ '<form class="card stack" data-form="report" novalidate><h3>Report a suspected fake doctor or clinic</h3><p class="muted">'+n+' report'+(n===1?' is':'s are')+' under review right now. Only state what you saw or experienced.</p><div class="form-grid"><div class="field"><label for="f-n">Name used by the person or clinic</label><input id="f-n" name="name"></div><div class="field"><label for="f-r">Registration number shown (if any)</label><input id="f-r" name="reg" placeholder="A-00000"></div><div class="field"><label for="f-s">Claimed specialty</label><input id="f-s" name="spec"></div><div class="field"><label for="f-p">Clinic and area</label><input id="f-p" name="place"></div><div class="field full"><label for="f-d">What happened</label><textarea id="f-d" name="details" placeholder="Describe the treatment, signboard or documents you saw."></textarea></div></div><div id="f-err"></div><div><button type="submit" class="btn btn-danger">Send report for review</button></div></form></div></section>';
+};
+function fillVerify(){
+ const out=$('#verify-out');if(!out)return;const q=S.verifyQ.trim().toLowerCase();
+ if(!q){out.innerHTML='<p class="hint">Results appear as you type.</p>';return}
+ const m=S.doctors.filter(d=>d.verified!==false&&(d.reg.toLowerCase()===q||d.name.toLowerCase().includes(q)));
+ out.innerHTML=m.length?m.map(d=>'<div class="okbox"><strong>'+ico('shield',16)+' '+esc(d.name)+'</strong> is in the verified list.<br>'+esc(d.spec)+' · BMDC <span class="mono">'+esc(d.reg)+'</span> · '+esc(d.qual)+'</div>').join(''):'<div class="err"><strong>No match in the verified list.</strong><br>This does not prove the person is fake, but do not rely on them until their registration is confirmed. You can report them using the form.</div>';
+}
+
+/* ---------- login, sign up and profile ---------- */
+const DEMOS=[['Patient','nasrin@careflow.demo'],['Doctor','rahman@careflow.demo'],['Admin','admin@careflow.demo']];
+const DEMO_PW='demo1234';
+const ROLE_LABEL={patient:'Patient',doctor:'Doctor',admin:'Administrator'};
+const FIELDS={
+ patient:['name','email','phone','dob','gender','blood','address','emg','photo'],
+ doctor:['name','spec','qual','exp','fee','phone','email','bio','photo'],
+ admin:['name','title','email','phone','photo']
+};
+function completion(e,role){const f=FIELDS[role];return Math.round(f.filter(k=>e[k]!==''&&e[k]!=null).length/f.length*100)}
+function nudge(e,role){
+ const c=completion(e,role);if(c>=100)return '';
+ return '<div class="card row-between" style="margin-bottom:20px"><div class="stack" style="gap:8px;flex:1;min-width:220px"><strong>Your profile is '+c+'% complete</strong><div class="bar" aria-hidden="true"><i style="width:'+c+'%"></i></div><span class="muted">Add a photo and the missing details '+(role==='patient'?'so doctors can help you faster.':'so patients can get to know you.')+'</span></div><a class="btn btn-primary" href="#profile">Complete profile</a></div>';
+}
+function pwField(id,name,label,auto){
+ return '<div class="field"><label for="'+id+'">'+label+'</label><div class="pw"><input id="'+id+'" name="'+name+'" type="password" autocomplete="'+auto+'"><button type="button" class="pw-btn" data-act="pw-toggle" aria-pressed="false" aria-label="Show password">Show</button></div></div>';
+}
+function doLogin(email,pw,remember){
+ const a=S.accounts.find(x=>x.email===String(email).trim().toLowerCase());
+ if(!a||a.pw!==pw)return false;
+ S.user={role:a.role,id:a.ref};S.remember=!!remember;
+ S.tabs.dash=a.role==='admin'?'overview':'appts';S.tabs.prof='details';S.profEdit=false;
+ const n=S.next;S.next=null;
+ S.authOpen=false;closeModal(true);
+ toast('Welcome, '+short(ent(S.user).name));
+ go(n||'dashboard');
+ setTimeout(maybeComplete,150);
+ return true;
+}
+function forgotHtml(){
+ return '<form class="stack" data-form="reset" novalidate><h2>Reset password</h2><p class="muted">Demo only. A real system would email you a secure link. Here you can set a new password directly.</p><div class="field"><label for="fp-e">Account email</label><input id="fp-e" name="email" type="email" autocomplete="username"></div>'+pwField('fp-p','pw','New password (at least 6 characters)','new-password')+'<div id="fp-err"></div><div class="row"><button type="submit" class="btn btn-primary">Set new password</button><button type="button" class="btn" data-act="auth-back">Back to log in</button></div></form>';
+}
+
+views.login=()=>views.home();
+const NEEDED={patient:['phone','dob','gender','blood','address','emg'],doctor:['qual','phone','bio'],admin:['phone','title']};
+const missing=(e,role)=>NEEDED[role].filter(k=>!e[k]&&e[k]!==0);
+
+function authHtml(){
+ const su=S.auth.mode==='signup',isDoc=S.auth.role==='doctor';
+ const note=!su&&S.next?'<div class="okbox">Please log in to continue.</div>':'';
+ const login='<form class="stack" data-form="login" novalidate><div class="field"><label for="l-e">Email</label><input id="l-e" name="email" type="email" inputmode="email" autocomplete="username" placeholder="you@example.com"></div>'+pwField('l-p','pw','Password','current-password')+
+  '<div class="row-between"><label class="check"><input type="checkbox" name="remember"'+(S.remember?' checked':'')+'> Keep me signed in</label><button type="button" class="linkbtn" data-act="forgot">Forgot password?</button></div><div id="l-err"></div><button type="submit" class="btn btn-primary btn-lg">Log in '+ico('arrow')+'</button></form>';
+ const photoRow=lbl=>'<div class="photo-row"><span id="s-prev">'+av({name:'?',photo:S.pendingPhoto},'lg')+'</span><div class="stack" style="gap:4px"><button type="button" class="btn btn-sm" data-act="signup-photo">'+lbl+'</button><span class="hint">JPG, PNG or WebP</span></div><input type="file" id="s-photo" data-photo="signup" accept="image/png,image/jpeg,image/webp" hidden></div>';
+ const signup='<form class="stack" data-form="signup" novalidate>'+photoRow('Add a photo (optional)')+
+  '<div class="form-grid">'+
+  '<div class="field"><label for="s-n">Full name *</label><input id="s-n" name="name" autocomplete="name"></div>'+
+  '<div class="field"><label for="s-p">Mobile number *</label><input id="s-p" name="phone" inputmode="tel" autocomplete="tel" placeholder="01712-345678"></div>'+
+  '<div class="field full"><label for="s-e">Email *</label><input id="s-e" name="email" type="email" autocomplete="email" placeholder="you@example.com"></div>'+
+  '<div class="field"><label for="s-d">Date of birth *</label><input id="s-d" name="dob" type="date" max="'+iso(today())+'"></div>'+
+  '<div class="field"><label for="s-g">Gender *</label><select id="s-g" name="gender"><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></div>'+
+  '<div class="field"><label for="s-b">Blood group</label><select id="s-b" name="blood"><option value="">Select</option>'+GROUPS.map(g=>'<option>'+g+'</option>').join('')+'</select></div>'+
+  '<div class="field"><label for="s-a">Address</label><input id="s-a" name="address" autocomplete="street-address" placeholder="Area, district"></div>'+
+  '<div class="field full"><label for="s-m">Emergency contact</label><input id="s-m" name="emg" placeholder="Name, relation, phone"></div></div>'+
+  pwField('s-w','pw','Password * (at least 6 characters)','new-password')+pwField('s-w2','pw2','Confirm password *','new-password')+
+  '<div id="s-err"></div><button type="submit" class="btn btn-primary btn-lg">Create patient account '+ico('arrow')+'</button><p class="hint">Fields marked * are required.</p></form>';
+ const dsignup='<form class="stack" data-form="docsignup" novalidate>'+photoRow('Add a photo (recommended)')+
+  '<div class="form-grid">'+
+  '<div class="field"><label for="s-n">Full name *</label><input id="s-n" name="name" autocomplete="name" placeholder="e.g. Anwar Hossain"></div>'+
+  '<div class="field"><label for="s-p">Mobile number *</label><input id="s-p" name="phone" inputmode="tel" autocomplete="tel" placeholder="01712-345678"></div>'+
+  '<div class="field full"><label for="s-e">Email *</label><input id="s-e" name="email" type="email" autocomplete="email" placeholder="you@example.com"></div>'+
+  '<div class="field"><label for="s-s">Specialization *</label><input id="s-s" name="spec" placeholder="e.g. Cardiologist"></div>'+
+  '<div class="field"><label for="s-dp">Department *</label><select id="s-dp" name="dept">'+DEPTS.map(d=>'<option value="'+d.c+'">'+esc(d.n)+'</option>').join('')+'</select></div>'+
+  '<div class="field"><label for="s-q">Qualification *</label><input id="s-q" name="qual" placeholder="e.g. MBBS, MD (Medicine)"></div>'+
+  '<div class="field"><label for="s-r">BMDC registration no. *</label><input id="s-r" name="reg" placeholder="A-12345"></div>'+
+  '<div class="field"><label for="s-x">Experience (years)</label><input id="s-x" name="exp" type="number" min="0" value="1"></div>'+
+  '<div class="field"><label for="s-f">Consultation fee (৳)</label><input id="s-f" name="fee" type="number" min="0" value="500"></div>'+
+  '<div class="field"><label for="s-a">Visiting from</label><input id="s-a" name="from" type="time" value="10:00"></div>'+
+  '<div class="field"><label for="s-b">Visiting until</label><input id="s-b" name="to" type="time" value="13:00"></div>'+
+  '<div class="field"><label for="s-u">Time per patient</label><select id="s-u" name="dur">'+durOpts(20)+'</select></div>'+
+  '<div class="field full"><span class="lbl">Available days *</span><div class="days">'+DAYS.map((x,i)=>'<label><input type="checkbox" name="days" value="'+i+'"> '+x+'</label>').join('')+'</div></div>'+
+  '<div class="field full"><label for="s-o">About you</label><textarea id="s-o" name="bio" maxlength="500" placeholder="Areas of interest, languages, chamber details…"></textarea></div></div>'+
+  pwField('s-w','pw','Password * (at least 6 characters)','new-password')+pwField('s-w2','pw2','Confirm password *','new-password')+
+  '<div id="s-err"></div><button type="submit" class="btn btn-primary btn-lg">Create doctor account '+ico('arrow')+'</button><p class="hint">Fields marked * are required. The admin checks your BMDC number. Until then your profile shows "Not yet verified".</p></form>';
+ const roleSeg='<div class="seg" role="group" aria-label="Account type"><button type="button" data-act="auth-role" data-r="patient" aria-pressed="'+(!isDoc)+'">I am a patient</button><button type="button" data-act="auth-role" data-r="doctor" aria-pressed="'+isDoc+'">I am a doctor</button></div>';
+ const demo='<div class="demo"><p class="lbl">Just exploring? Fill in a demo account, then press Log in</p><div class="demo-row">'+DEMOS.map(d=>'<button type="button" class="btn btn-sm" data-act="demo" data-e="'+d[1]+'">'+d[0]+'</button>').join('')+'</div><p class="hint">Demo password: <span class="mono">'+DEMO_PW+'</span></p></div>';
+ return '<div class="stack"><div class="row-between"><div><p class="eyebrow" style="margin:0 0 4px">CareFlow account</p><h2>'+(su?(isDoc?'Create your doctor account':'Create your patient account'):'Welcome back')+'</h2></div><button type="button" class="btn btn-sm" data-act="modal-close" aria-label="Close">'+ico('x',16)+'</button></div>'+
+  '<div class="seg" role="group" aria-label="Log in or create account"><button type="button" data-act="auth-mode" data-m="login" aria-pressed="'+!su+'">Log in</button><button type="button" data-act="auth-mode" data-m="signup" aria-pressed="'+su+'">Create account</button></div>'+note+(su?roleSeg+(isDoc?dsignup:signup):login)+(su?'':demo)+'</div>';
+}
+function openAuth(keep){
+ S.authOpen=true;if(!keep)S.pendingPhoto='';
+ const su=S.auth.mode==='signup';
+ openModal(authHtml(),su?'':'narrow');
+ const f=$(su?'#s-n':'#l-e');if(f)f.focus();
+}
+
+function photoBox(e,m){
+ return av(e,'xl')+'<div class="row" style="justify-content:center"><button type="button" class="btn btn-primary btn-sm" data-act="'+(m?'photo-pick-m':'photo-pick')+'">'+(e.photo?'Change photo':'Upload photo')+'</button>'+(e.photo?'<button type="button" class="btn btn-sm" data-act="photo-del">Remove</button>':'')+'</div>';
+}
+function openComplete(){
+ const e=ent();if(!e)return;const role=S.user.role;
+ openModal('<div class="stack"><div><p class="eyebrow" style="margin:0 0 4px">One last step</p><h2>Complete your profile</h2></div><p class="muted">'+(role==='patient'?'Doctors need these details to treat you safely.':'Add these details so people can find and trust you.')+' You can change them any time from My profile.</p><div class="photo-box" id="m-photo">'+photoBox(e,true)+'</div><input type="file" id="m-photo-in" data-photo="1" accept="image/png,image/jpeg,image/webp" hidden>'+profForm(e,role,true)+'</div>');
+}
+function maybeComplete(){const e=S.user&&ent(S.user);if(e&&missing(e,S.user.role).length)openComplete()}
+
+function profRows(e,role){
+ const r=(l,v,w)=>'<div'+(w?' class="wide"':'')+'><dt>'+l+'</dt><dd>'+((v||v===0)?v:'<span class="muted">Not added</span>')+'</dd></div>';
+ if(role==='patient')return r('Full name',esc(e.name))+r('Patient ID','<span class="mono">'+esc(e.id)+'</span>')+r('Email',esc(e.email))+r('Mobile number',esc(e.phone))+r('Date of birth',e.dob?esc(fmtLong(e.dob)):'')+r('Gender',esc(e.gender))+r('Blood group',esc(e.blood))+r('Address',esc(e.address),1)+r('Emergency contact',esc(e.emg),1);
+ if(role==='doctor')return r('Full name',esc(e.name))+r('Doctor ID','<span class="mono">'+esc(e.id)+'</span>')+r('Specialization',esc(e.spec))+r('Department',esc(dept(e.dept).n))+r('Qualification',esc(e.qual))+r('Experience',e.exp+' years')+r('Consultation fee',money(e.fee))+r('Time per patient',durOf(e)+' minutes')+r('Status',pill(e.status))+r('Email',esc(e.email))+r('Mobile number',esc(e.phone))+r('Available',esc(availStr(e)),1)+r('BMDC registration','<span class="mono">'+esc(e.reg)+'</span> '+(e.verified===false?'<span class="pill warn">Awaiting admin verification</span>':'<span class="pill ok">'+ico('shield',13)+'Verified</span>'),1)+r('About',esc(e.bio),1);
+ return r('Full name',esc(e.name))+r('Role',esc(e.title||'Administrator'))+r('Email',esc(e.email))+r('Mobile number',esc(e.phone));
+}
+function profForm(e,role,modal){
+ const tv=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+ const inp=(id,name,label,val,attrs,full)=>'<div class="field'+(full?' full':'')+'"><label for="'+id+'">'+label+'</label><input id="'+id+'" name="'+name+'" value="'+esc(val)+'"'+(attrs||'')+'></div>';
+ const sel=(id,name,label,opts,val)=>'<div class="field"><label for="'+id+'">'+label+'</label><select id="'+id+'" name="'+name+'">'+opts.map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select></div>';
+ let h='<form class="'+(modal?'stack':'card stack')+'" data-form="profile" novalidate>'+(modal?'':'<div class="row-between"><h3>Edit your details</h3></div>')+'<div class="form-grid">'+
+  inp('pf-n','name','Full name',e.name,' autocomplete="name"')+inp('pf-e','email','Email',e.email,' type="email" autocomplete="email"')+inp('pf-p','phone','Mobile number',e.phone,' inputmode="tel" autocomplete="tel" placeholder="01712-345678"');
+ if(role==='patient'){
+  h+=inp('pf-d','dob','Date of birth',e.dob,' type="date" max="'+iso(today())+'"')+sel('pf-g','gender','Gender',[['','Select'],['Female','Female'],['Male','Male'],['Other','Other']],e.gender)+sel('pf-b','blood','Blood group',[['','Select']].concat(GROUPS.map(g=>[g,g])),e.blood)+inp('pf-a','address','Address',e.address,' autocomplete="street-address"')+inp('pf-m','emg','Emergency contact (name, relation, phone)',e.emg,'',true);
+ } else if(role==='doctor'){
+  h+=inp('pf-s','spec','Specialization',e.spec)+sel('pf-dp','dept','Department',DEPTS.map(d=>[d.c,d.n]),e.dept)+inp('pf-q','qual','Qualification',e.qual)+inp('pf-x','exp','Experience (years)',e.exp,' type="number" min="0"')+inp('pf-f','fee','Consultation fee (৳)',e.fee,' type="number" min="0"')+sel('pf-t','status','Status',[['Active','Active (taking bookings)'],['On leave','On leave']],e.status)+
+   '<div class="field"><label for="pf-r">BMDC registration no.</label><input id="pf-r" value="'+esc(e.reg)+'" disabled><span class="hint">Only the admin can change this.</span></div>'+
+   inp('pf-a','from','Visiting from',tv(e.from),' type="time"')+inp('pf-b','to','Visiting until',tv(e.to),' type="time"')+
+   '<div class="field"><label for="pf-u">Time per patient</label><select id="pf-u" name="dur">'+durOpts(durOf(e))+'</select></div>'+
+   '<div class="field full"><span class="lbl">Available days</span><div class="days">'+DAYS.map((x,i)=>'<label><input type="checkbox" name="days" value="'+i+'"'+(e.days.includes(i)?' checked':'')+'> '+x+'</label>').join('')+'</div></div>'+
+   '<div class="field full"><label for="pf-o">About you (shown on your doctor card)</label><textarea id="pf-o" name="bio" maxlength="500" placeholder="Areas of interest, languages, chamber details…">'+esc(e.bio)+'</textarea></div>';
+ } else {
+  h+=inp('pf-i','title','Job title',e.title);
+ }
+ return h+'</div><div id="pf-err"></div><div class="row"><button type="submit" class="btn btn-primary">Save changes</button>'+(modal?'<button type="button" class="btn" data-act="modal-close">Fill in later</button>':'<button type="button" class="btn" data-act="prof-cancel">Cancel</button>')+'</div></form>';
+}
+views.profile=()=>{
+ const u=S.user,e=ent(u),a=acctOf(u),role=u.role,tab=S.tabs.prof||'details',c=completion(e,role);
+ const sub=role==='doctor'?e.spec+' · '+dept(e.dept).n:role==='patient'?'Patient ID '+e.id:(e.title||'Administrator');
+ let body='';
+ if(tab==='security'){
+  body='<div class="card stack" style="max-width:560px"><h3>Change password</h3><p class="muted">Logged in as <strong>'+esc(a?a.email:e.email)+'</strong></p><form class="stack" data-form="pw" novalidate>'+pwField('pw-c','cur','Current password','current-password')+pwField('pw-n','pw','New password (at least 6 characters)','new-password')+pwField('pw-2','pw2','Confirm new password','new-password')+'<div id="pw-err"></div><div><button type="submit" class="btn btn-primary">Update password</button></div></form></div>';
+ } else if(S.profEdit){
+  body=profForm(e,role);
+ } else {
+  body='<div class="card stack"><div class="row-between"><h3>Personal details</h3><button type="button" class="btn btn-primary btn-sm" data-act="prof-edit">Edit profile</button></div><dl class="kv">'+profRows(e,role)+'</dl></div>';
+ }
+ return '<section class="wrap page"><header class="page-head"><p class="eyebrow">My profile · আমার প্রোফাইল</p><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Your account</h1></header>'+
+  '<div class="card prof-head"><div class="photo-box" id="photo-box">'+photoBox(e)+'</div><div class="stack" style="flex:1;min-width:240px"><div class="row"><span class="pill info">'+ROLE_LABEL[role]+'</span></div><h2>'+esc(e.name)+'</h2><p class="muted">'+esc(sub)+'</p><div class="stack" style="gap:6px;max-width:340px"><div class="row-between"><span class="hint">Profile completeness</span><strong class="mono">'+c+'%</strong></div><div class="bar" aria-hidden="true"><i style="width:'+c+'%"></i></div></div><p class="hint">Photo: JPG, PNG or WebP. It is cropped to a square. Changes are saved in this browser.</p></div><a class="btn" href="#dashboard">Go to dashboard</a></div>'+
+  '<input type="file" id="photo-in" data-photo="1" accept="image/png,image/jpeg,image/webp" hidden>'+
+  tabsHtml('prof',[['details','Details'],['security','Password and security']],tab)+body+'</section>';
+};
+
+/* dashboards */
+function head(title,sub,right,ent){return '<header class="page-head"><div class="row-between"><div class="row" style="gap:16px;flex-wrap:nowrap">'+(ent?av(ent,'lg'):'')+'<div><p class="eyebrow">'+esc(sub)+'</p><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">'+esc(title)+'</h1></div></div><div class="row">'+(right||'')+'<a class="btn" href="#profile">My profile</a></div></div></header>'}
+function apptTable(list,mode){
+ if(!list.length)return emptyBox('No appointments','Nothing to show here yet.');
+ return '<div class="scroll"><table class="tbl"><thead><tr><th>ID</th><th>'+(mode==='doctor'?'Patient':'Patient / doctor')+'</th><th>When</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+list.map(a=>{
+  const hasRx=S.rx.some(r=>r.apptId===a.id);let act='';
+  if(a.status==='Pending')act+='<button type="button" class="btn btn-sm btn-primary" data-act="appt" data-id="'+a.id+'" data-s="Approved">Approve</button> <button type="button" class="btn btn-sm" data-act="appt" data-id="'+a.id+'" data-s="Cancelled">Decline</button>';
+  if(a.status==='Approved'){act+=(mode==='admin'?'':'<button type="button" class="btn btn-sm btn-primary" data-act="rx-open" data-id="'+a.id+'">Complete and prescribe</button> ')+'<button type="button" class="btn btn-sm" data-act="appt" data-id="'+a.id+'" data-s="Cancelled">Cancel</button>'}
+  if(a.status==='Completed'&&mode==='doctor')act+=hasRx?'<button type="button" class="btn btn-sm" data-act="rx-view" data-id="'+a.id+'">View prescription</button>':'<button type="button" class="btn btn-sm btn-primary" data-act="rx-open" data-id="'+a.id+'">Write prescription</button>';
+  return '<tr><td class="mono">'+esc(a.id)+'</td><td><strong>'+esc(a.patientName)+'</strong>'+(mode==='doctor'?'':'<br><span class="muted">'+esc(docName(a.doctorId))+'</span>')+'</td><td>'+esc(fmtDate(a.date))+'<br><span class="muted">'+t12(a.min)+'</span></td><td>'+esc(a.reason)+'</td><td>'+pill(a.status)+'</td><td>'+(act||'<span class="muted">—</span>')+'</td></tr>'}).join('')+'</tbody></table></div>';
+}
+function rxHtml(r){
+ return '<div class="card stack"><div class="row-between"><div><strong>'+esc(docName(r.doctorId))+'</strong><br><span class="muted">'+esc(fmtLong(r.date))+' · <span class="mono">'+esc(r.id)+'</span></span></div></div><div class="scroll"><table class="tbl" style="min-width:420px"><thead><tr><th>Medicine</th><th>Dosage</th><th>Duration</th></tr></thead><tbody>'+r.items.map(i=>'<tr><td><strong>'+esc(i.med)+'</strong></td><td><span class="mono">'+esc(i.dose.replace(/\+/g,' + '))+'</span> <span class="muted">('+esc(i.timing)+' · '+MEALS[i.timing]+')</span></td><td>'+i.days+' days</td></tr>').join('')+'</tbody></table></div>'+(r.note?'<p class="muted">'+esc(r.note)+'</p>':'')+'</div>';
+}
+
+function dashPatient(){
+ const p=patById(S.user.id),tab=S.tabs.dash||'appts';
+ const mine=S.appts.filter(a=>a.patientId===p.id).sort((a,b)=>byWhen(b,a));
+ const up=mine.filter(a=>a.status==='Pending'||a.status==='Approved').sort(byWhen)[0];
+ let body='';
+ if(tab==='appts'){body=mine.length?'<div class="stack">'+mine.map(a=>{const d=docById(a.doctorId);return '<div class="card stack"><div class="row-between"><div><h3>'+esc(docName(a.doctorId))+'</h3><p class="muted">'+esc(d?d.spec:'')+' · '+esc(a.reason)+'</p></div><div class="mono">'+esc(fmtDate(a.date))+' · '+t12(a.min)+'</div></div>'+tracker(a.status)+((a.status==='Pending'||a.status==='Approved')?'<div><button type="button" class="btn btn-sm" data-act="appt" data-id="'+a.id+'" data-s="Cancelled">Cancel appointment</button></div>':'')+'</div>'}).join('')+'</div>':emptyBox('No appointments yet','Book your first one.')}
+ if(tab==='rx'){const l=S.rx.filter(r=>r.patientId===p.id).sort((a,b)=>b.date.localeCompare(a.date));body=l.length?'<div class="stack">'+l.map(rxHtml).join('')+'</div>':emptyBox('No prescriptions yet','Prescriptions appear here after a completed visit.')}
+ if(tab==='hist'){body='<div class="split"><div class="card stack"><h3>Medical history</h3>'+(p.history.length?'<ul class="timeline">'+p.history.map(h=>'<li><span class="mono muted">'+esc(fmtLong(h.date))+'</span><span>'+esc(h.text)+'</span></li>').join('')+'</ul>':'<p class="muted">No history recorded yet.</p>')+'</div><div class="card stack"><h3>Reports</h3>'+(p.reports.length?'<ul class="timeline">'+p.reports.map(h=>'<li><span class="mono muted">'+esc(fmtLong(h.date))+'</span><span><strong>'+esc(h.name)+'</strong><br>'+esc(h.result)+'</span></li>').join('')+'</ul>':'<p class="muted">No reports uploaded.</p>')+'</div></div>'}
+ return head('Hello, '+p.name.split(' ')[0],'Patient dashboard','<button type="button" class="btn btn-primary" data-act="go" data-to="book">Book appointment</button>',p)+
+ '<div class="card" style="margin-bottom:20px"><dl class="kv" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"><div><dt>Patient ID</dt><dd class="mono">'+esc(p.id)+'</dd></div><div><dt>Date of birth</dt><dd>'+esc(fmtLong(p.dob))+'</dd></div><div><dt>Gender</dt><dd>'+nd(p.gender)+'</dd></div><div><dt>Blood group</dt><dd>'+nd(p.blood)+'</dd></div><div><dt>Phone</dt><dd class="mono">'+esc(p.phone)+'</dd></div><div><dt>Address</dt><dd>'+nd(p.address)+'</dd></div><div class="wide"><dt>Emergency contact</dt><dd>'+nd(p.emg)+'</dd></div></dl></div>'+
+ (up?'<div class="card row-between" style="margin-bottom:20px"><div><p class="eyebrow" style="margin:0 0 4px">Next appointment</p><strong>'+esc(docName(up.doctorId))+'</strong> · '+esc(fmtDate(up.date))+', '+t12(up.min)+'</div>'+pill(up.status)+'</div>':'')+
+ nudge(p,'patient')+tabsHtml('dash',[['appts','Appointments'],['rx','Prescriptions'],['hist','History and reports']],tab)+body;
+}
+function dashDoctor(){
+ const d=docById(S.user.id),tab=S.tabs.dash||'appts';
+ const mine=S.appts.filter(a=>a.doctorId===d.id).sort(byWhen);
+ const pend=mine.filter(a=>a.status==='Pending').length,appr=mine.filter(a=>a.status==='Approved').length,comp=mine.filter(a=>a.status==='Completed').length;
+ let body='';
+ if(tab==='appts')body=apptTable(mine.filter(a=>a.status!=='Completed').concat(mine.filter(a=>a.status==='Completed').reverse()),'doctor');
+ if(tab==='rx'){const l=S.rx.filter(r=>r.doctorId===d.id).sort((a,b)=>b.date.localeCompare(a.date));body=l.length?'<div class="stack">'+l.map(r=>'<div class="stack" style="gap:6px"><strong>'+esc((patById(r.patientId)||{name:'Patient'}).name)+'</strong>'+rxHtml(r)+'</div>').join('')+'</div>':emptyBox('No prescriptions yet','Complete an appointment to write one.')}
+ if(tab==='sched'){body='<div class="card stack"><p><strong>'+esc(availStr(d))+'</strong> · '+durOf(d)+' minutes per patient</p><div class="scroll"><table class="tbl" style="min-width:380px"><thead><tr><th>Date</th><th>Booked</th><th>Free</th></tr></thead><tbody>'+openDates(d,6).map(dt=>{const tot=slotsOf(d).length,b=S.appts.filter(a=>a.doctorId===d.id&&a.date===dt&&a.status!=='Cancelled').length;return '<tr><td>'+esc(fmtDate(dt))+'</td><td>'+b+' of '+tot+'</td><td>'+Math.max(0,tot-b)+'</td></tr>'}).join('')+'</tbody></table></div></div>'}
+ return head(d.name,'Doctor dashboard · '+d.spec,bm(d),d)+
+ '<div class="tiles"><div class="tile"><b>'+pend+'</b><span>Waiting for approval</span></div><div class="tile"><b>'+appr+'</b><span>Approved visits</span></div><div class="tile"><b>'+comp+'</b><span>Completed visits</span></div></div>'+
+ nudge(d,'doctor')+tabsHtml('dash',[['appts','Appointments'],['rx','Prescriptions issued'],['sched','Schedule']],tab)+body;
+}
+function dashAdmin(){
+ const tab=S.tabs.dash||'overview';
+ const pend=S.appts.filter(a=>a.status==='Pending').length,openReq=S.bloodReq.filter(r=>r.status==='Open').length,rep=S.reports.filter(r=>r.status==='Under review').length;
+ const unv=S.donors.filter(d=>!d.verified).length;
+ const inv=S.appts.filter(a=>a.status==='Completed').map(a=>({id:'INV-'+a.id.slice(3),a:a,amt:(docById(a.doctorId)||{fee:0}).fee}));
+ const collected=inv.filter(i=>i.a.paid).reduce((s,i)=>s+i.amt,0),due=inv.filter(i=>!i.a.paid).reduce((s,i)=>s+i.amt,0);
+ let body='';
+ if(tab==='overview'){
+  const cnt={};S.appts.filter(a=>a.status!=='Cancelled').forEach(a=>{const d=docById(a.doctorId);if(d)cnt[d.dept]=(cnt[d.dept]||0)+1});
+  const ks=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]),mx=cnt[ks[0]]||1;
+  body='<div class="tiles"><div class="tile"><b>'+S.doctors.filter(d=>d.status==='Active').length+'</b><span>Active doctors</span></div><div class="tile"><b>'+S.patients.length+'</b><span>Registered patients</span></div><div class="tile"><b>'+pend+'</b><span>Appointments pending</span></div><div class="tile"><b>'+openReq+'</b><span>Open blood requests</span></div><div class="tile"><b>'+rep+'</b><span>Reports under review</span></div><div class="tile"><b>'+money(collected)+'</b><span>Fees collected</span></div></div>'+
+  '<div class="split"><div class="card stack"><h3>Appointments by department</h3>'+ks.map(k=>'<div class="hbar"><span>'+esc(dept(k).n)+'</span><div class="bar"><i style="width:'+Math.round(cnt[k]/mx*100)+'%"></i></div><span class="mono">'+cnt[k]+'</span></div>').join('')+'</div>'+
+  '<div class="card stack"><h3>Needs your attention</h3>'+
+  [[pend,'appointments waiting for approval','appts'],[S.doctors.filter(d=>d.verified===false).length,'new doctors to verify','doctors'],[unv,'new blood donors to verify','blood'],[rep,'fake-doctor reports to review','reports'],[inv.filter(i=>!i.a.paid).length,'invoices still due ('+money(due)+')','billing']].map(x=>'<button type="button" class="btn" style="justify-content:space-between" data-act="tab" data-scope="dash" data-tab="'+x[2]+'"><span><strong>'+x[0]+'</strong> '+x[1]+'</span>'+ico('arrow',16)+'</button>').join('')+'</div></div>';
+ }
+ if(tab==='appts'){const l=S.appts.filter(a=>!S.af.status||a.status===S.af.status).sort((a,b)=>byWhen(b,a));body='<div class="field" style="max-width:240px;margin-bottom:14px"><label for="af-s">Status</label><select id="af-s" data-bind="af:status" data-live="rerender"><option value="">All</option>'+['Pending','Approved','Completed','Cancelled'].map(s=>'<option'+(S.af.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+apptTable(l,'admin')}
+ if(tab==='doctors'){body='<div class="row-between" style="margin-bottom:14px"><p class="muted">'+S.doctors.length+' doctors</p><button type="button" class="btn btn-primary" data-act="doc-form">'+ico('plus',16)+' Add doctor</button></div><div class="scroll"><table class="tbl" style="min-width:860px"><thead><tr><th>ID</th><th>Doctor</th><th>Qualification</th><th>Fee</th><th>Availability</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+S.doctors.map(d=>'<tr><td class="mono">'+esc(d.id)+'</td><td><div class="row" style="flex-wrap:nowrap;gap:10px">'+av(d,'sm')+'<div><strong>'+esc(d.name)+'</strong><br><span class="muted">'+esc(d.spec)+' · '+esc(dept(d.dept).n)+'</span></div></div></td><td>'+esc(d.qual)+'<br><span class="muted">'+d.exp+' years · '+esc(d.reg)+'</span></td><td>'+money(d.fee)+'</td><td>'+esc(availStr(d))+'<br><span class="muted">'+durOf(d)+' min per patient</span></td><td>'+pill(d.status)+(d.verified===false?'<br>'+pill('Unverified'):'')+'</td><td>'+(d.verified===false?'<button type="button" class="btn btn-sm btn-primary" data-act="doc-ok" data-id="'+d.id+'">Verify</button> ':'')+'<button type="button" class="btn btn-sm" data-act="doc-form" data-id="'+d.id+'">Edit</button> <button type="button" class="btn btn-sm" data-act="doc-del" data-id="'+d.id+'">Delete</button></td></tr>').join('')+'</tbody></table></div>'}
+ if(tab==='patients'){body='<div class="row-between" style="margin-bottom:14px"><p class="muted">'+S.patients.length+' patients</p><button type="button" class="btn btn-primary" data-act="pat-form">'+ico('plus',16)+' Add patient</button></div><div class="scroll"><table class="tbl" style="min-width:900px"><thead><tr><th>ID</th><th>Name</th><th>DOB</th><th>Gender</th><th>Blood</th><th>Phone</th><th>Address</th><th>Emergency contact</th><th>Medical history</th></tr></thead><tbody>'+S.patients.map(p=>'<tr><td class="mono">'+esc(p.id)+'</td><td><div class="row" style="flex-wrap:nowrap;gap:10px">'+av(p,'sm')+'<strong>'+esc(p.name)+'</strong></div></td><td>'+esc(fmtLong(p.dob))+'</td><td>'+esc(p.gender)+'</td><td>'+esc(p.blood)+'</td><td class="mono">'+esc(p.phone)+'</td><td>'+esc(p.address)+'</td><td>'+esc(p.emg)+'</td><td>'+(p.history.length?esc(p.history[0].text):'<span class="muted">None</span>')+'</td></tr>').join('')+'</tbody></table></div>'}
+ if(tab==='blood'){body='<div class="stack"><h3>Donors</h3><div class="scroll"><table class="tbl"><thead><tr><th>Donor</th><th>Group</th><th>Phone</th><th>Area</th><th>Last donated</th><th>Verification</th></tr></thead><tbody>'+S.donors.map(d=>'<tr><td><strong>'+esc(d.name)+'</strong></td><td>'+esc(d.group)+'</td><td class="mono">'+esc(d.phone)+'</td><td>'+esc(d.loc)+'</td><td>'+esc(agoLabel(d))+'</td><td>'+(d.verified?pill('Verified'):'<button type="button" class="btn btn-sm btn-primary" data-act="donor-ok" data-id="'+d.id+'">Verify donor</button>')+'</td></tr>').join('')+'</tbody></table></div><h3 style="margin-top:12px">Blood requests</h3><div class="scroll"><table class="tbl"><thead><tr><th>Group</th><th>Bags</th><th>Hospital and area</th><th>Contact</th><th>Status</th><th></th></tr></thead><tbody>'+S.bloodReq.map(r=>'<tr><td><span class="pill bad">'+esc(r.group)+'</span></td><td>'+r.units+'</td><td>'+esc(r.hospital)+', '+esc(r.loc)+'</td><td>'+esc(r.contact)+' · <span class="mono">'+esc(r.phone)+'</span></td><td>'+pill(r.status)+'</td><td>'+(r.status==='Open'?'<button type="button" class="btn btn-sm" data-act="req-close" data-id="'+r.id+'">Mark fulfilled</button>':'')+'</td></tr>').join('')+'</tbody></table></div></div>'}
+ if(tab==='reports'){body=S.reports.length?'<div class="stack">'+S.reports.slice().reverse().map(r=>'<div class="card stack"><div class="row-between"><div><h3>'+esc(r.name)+'</h3><p class="muted"><span class="mono">'+esc(r.id)+'</span> · reported '+esc(fmtDate(r.date))+'</p></div>'+pill(r.status)+'</div><dl class="kv"><div><dt>Registration shown</dt><dd class="mono">'+esc(r.reg||'None')+'</dd></div><div><dt>Claimed specialty</dt><dd>'+esc(r.spec||'—')+'</dd></div><div class="wide"><dt>Clinic and area</dt><dd>'+esc(r.place||'—')+'</dd></div><div class="wide"><dt>What was reported</dt><dd>'+esc(r.details)+'</dd></div></dl>'+(r.status==='Under review'?'<div class="row"><button type="button" class="btn btn-sm btn-danger" data-act="rep" data-id="'+r.id+'" data-s="Confirmed fake">Confirm as fake</button><button type="button" class="btn btn-sm" data-act="rep" data-id="'+r.id+'" data-s="Cleared">Doctor is legitimate</button><button type="button" class="btn btn-sm" data-act="rep" data-id="'+r.id+'" data-s="Dismissed">Dismiss</button></div>':'')+'</div>').join('')+'</div>':emptyBox('No reports','Nothing has been reported.')}
+ if(tab==='billing'){body='<div class="tiles"><div class="tile"><b>'+money(collected)+'</b><span>Collected</span></div><div class="tile"><b>'+money(due)+'</b><span>Due</span></div></div>'+(inv.length?'<div class="scroll"><table class="tbl"><thead><tr><th>Invoice</th><th>Patient</th><th>Doctor</th><th>Visit</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>'+inv.map(i=>'<tr><td class="mono">'+i.id+'</td><td>'+esc(i.a.patientName)+'</td><td>'+esc(docName(i.a.doctorId))+'</td><td>'+esc(fmtDate(i.a.date))+'</td><td>'+money(i.amt)+'</td><td>'+pill(i.a.paid?'Paid':'Due')+'</td><td>'+(i.a.paid?'':'<button type="button" class="btn btn-sm btn-primary" data-act="pay" data-id="'+i.a.id+'">Mark paid</button>')+'</td></tr>').join('')+'</tbody></table></div>':emptyBox('No invoices','Invoices appear when a visit is completed.'))}
+ return head('System control','Administrator dashboard','',S.admin)+tabsHtml('dash',[['overview','Overview'],['appts','Appointments'],['doctors','Doctors'],['patients','Patients'],['blood','Blood hub'],['reports','Fake-doctor reports'],['billing','Billing']],tab)+body;
+}
+views.dashboard=()=>{const r=S.user.role;return '<section class="wrap page">'+(r==='patient'?dashPatient():r==='doctor'?dashDoctor():dashAdmin())+'</section>'};
+
+/* ---------- modals ---------- */
+function docFormHtml(id){
+ const d=id?docById(id):{name:'',spec:'',dept:'MED',qual:'',exp:1,fee:500,days:[0],from:H(10),to:H(13),dur:20,status:'Active',reg:''};
+ const tv=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+ return '<form class="stack" data-form="doctor" data-id="'+(id||'')+'" novalidate><h2>'+(id?'Edit doctor':'Add doctor')+'</h2><div class="form-grid">'+
+ '<div class="field"><label for="m-n">Name</label><input id="m-n" name="name" value="'+esc(d.name)+'"></div><div class="field"><label for="m-s">Specialization</label><input id="m-s" name="spec" value="'+esc(d.spec)+'"></div>'+
+ '<div class="field"><label for="m-d">Department</label><select id="m-d" name="dept">'+DEPTS.map(x=>'<option value="'+x.c+'"'+(d.dept===x.c?' selected':'')+'>'+esc(x.n)+'</option>').join('')+'</select></div><div class="field"><label for="m-q">Qualification</label><input id="m-q" name="qual" value="'+esc(d.qual)+'"></div>'+
+ '<div class="field"><label for="m-e">Experience (years)</label><input id="m-e" name="exp" type="number" min="0" value="'+d.exp+'"></div><div class="field"><label for="m-f">Fee (৳)</label><input id="m-f" name="fee" type="number" min="0" value="'+d.fee+'"></div>'+
+ '<div class="field"><label for="m-r">BMDC registration no.</label><input id="m-r" name="reg" value="'+esc(d.reg)+'" placeholder="A-12345"></div><div class="field"><label for="m-m">Login email</label><input id="m-m" name="email" type="email" value="'+esc(d.email||'')+'"'+(id?' readonly':'')+' autocomplete="off"></div><div class="field"><label for="m-t">Status</label><select id="m-t" name="status">'+['Active','On leave'].map(s=>'<option'+(d.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
+ '<div class="field"><label for="m-a">From</label><input id="m-a" name="from" type="time" value="'+tv(d.from)+'"></div><div class="field"><label for="m-b">To</label><input id="m-b" name="to" type="time" value="'+tv(d.to)+'"></div><div class="field"><label for="m-u">Time per patient</label><select id="m-u" name="dur">'+durOpts(durOf(d))+'</select></div>'+
+ '<div class="field full"><span class="lbl">Available days</span><div class="days">'+DAYS.map((x,i)=>'<label><input type="checkbox" name="days" value="'+i+'"'+(d.days.includes(i)?' checked':'')+'> '+x+'</label>').join('')+'</div></div></div><div id="m-err"></div><div class="row"><button type="submit" class="btn btn-primary">Save doctor</button><button type="button" class="btn" data-act="modal-close">Cancel</button></div></form>';
+}
+function patFormHtml(){
+ return '<form class="stack" data-form="patient" novalidate><h2>Add patient</h2><div class="form-grid"><div class="field"><label for="p-n">Full name</label><input id="p-n" name="name"></div><div class="field"><label for="p-d">Date of birth</label><input id="p-d" name="dob" type="date"></div><div class="field"><label for="p-g">Gender</label><select id="p-g" name="gender"><option>Female</option><option>Male</option><option>Other</option></select></div><div class="field"><label for="p-b">Blood group</label><select id="p-b" name="blood">'+GROUPS.map(g=>'<option>'+g+'</option>').join('')+'</select></div><div class="field"><label for="p-p">Phone</label><input id="p-p" name="phone" inputmode="tel"></div><div class="field"><label for="p-m">Login email (optional)</label><input id="p-m" name="email" type="email" autocomplete="off"></div><div class="field"><label for="p-a">Address</label><input id="p-a" name="address"></div><div class="field full"><label for="p-e">Emergency contact (name, relation, phone)</label><input id="p-e" name="emg"></div><div class="field full"><label for="p-h">Medical history (optional)</label><textarea id="p-h" name="hist"></textarea></div></div><div id="p-err"></div><div class="row"><button type="submit" class="btn btn-primary">Save patient</button><button type="button" class="btn" data-act="modal-close">Cancel</button></div></form>';
+}
+function rxRowsHtml(){
+ return S.rxs.rows.map((r,i)=>'<div class="rx-row"><div class="field rx-med"><label>Medicine and strength</label><input class="rx-m" value="'+esc(r.med)+'" placeholder="Paracetamol 500mg"></div><div class="field"><label>Dosage</label><select class="rx-d">'+DOSES.map(d=>'<option value="'+d+'"'+(r.dose===d?' selected':'')+'>'+d.replace(/\+/g,' + ')+'</option>').join('')+'</select></div><div class="field"><label>Timing</label><select class="rx-t">'+Object.keys(MEALS).map(k=>'<option value="'+k+'"'+(r.timing===k?' selected':'')+'>'+k+'</option>').join('')+'</select></div><div class="field"><label>Days</label><input class="rx-n" type="number" min="1" value="'+r.days+'"></div><button type="button" class="btn btn-sm" aria-label="Remove medicine" data-act="rx-del" data-i="'+i+'">'+ico('x',16)+'</button></div>').join('');
+}
+function rxModal(){
+ const a=S.appts.find(x=>x.id===S.rxs.appt);
+ return '<form class="stack" data-form="rx" novalidate><h2>Prescription</h2><p class="muted">'+esc(a.patientName)+' · '+esc(fmtDate(a.date))+' · <span class="mono">'+esc(a.id)+'</span></p><div id="rx-rows">'+rxRowsHtml()+'</div><div><button type="button" class="btn btn-sm" data-act="rx-add">'+ico('plus',16)+' Add medicine</button></div><div class="field"><label for="rx-note">Advice and notes</label><textarea id="rx-note">'+esc(S.rxs.note)+'</textarea></div><div id="rx-err"></div><div class="row"><button type="submit" class="btn btn-primary">Save and complete visit</button><button type="button" class="btn" data-act="modal-close">Cancel</button></div></form>';
+}
+function readRx(){S.rxs.rows=$$('.rx-row').map(r=>({med:$('.rx-m',r).value,dose:$('.rx-d',r).value,timing:$('.rx-t',r).value,days:Math.max(1,parseInt($('.rx-n',r).value,10)||1)}));const n=$('#rx-note');if(n)S.rxs.note=n.value}
+
+/* ---------- actions ---------- */
+const ACT={
+ go:el=>go(el.dataset.to),
+ quick:el=>{S.care.sel=new Set([el.dataset.s]);go('care')},
+ dept:el=>{S.df.dept=el.dataset.c;S.df.q='';S.df.day='';go('doctors')},
+ sym:el=>{const id=el.dataset.id;S.care.sel.has(id)?S.care.sel.delete(id):S.care.sel.add(id);el.setAttribute('aria-pressed',S.care.sel.has(id));fillCare()},
+ 'sym-clear':()=>{S.care.sel=new Set();S.care.child=false;render()},
+ book:el=>{S.book.doc=el.dataset.id;S.book.date=el.dataset.d||'';S.book.min=el.dataset.m?+el.dataset.m:null;S.book.done=null;S.book.err='';go('book')},
+ 'pick-date':el=>{S.book.date=el.dataset.d;S.book.min=null;render()},
+ 'pick-slot':el=>{S.book.min=+el.dataset.m;render()},
+ 'book-reset':()=>{S.book={doc:'',date:'',min:null,name:'',phone:'',reason:'',err:'',done:null,pre:false};render()},
+ tab:el=>{S.tabs[el.dataset.scope]=el.dataset.tab;render()},
+ bgroup:el=>{S.blood.group=S.blood.group===el.dataset.g?'':el.dataset.g;render()},
+ copy:el=>{const v=el.dataset.v;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(()=>toast('Number copied')).catch(()=>toast('Copy failed. Select the number and copy it by hand.'))}else toast('Select the number and copy it by hand.')},
+ logout:()=>{S.user=null;S.tabs.dash='';toast('Signed out');go('home')},
+ 'modal-close':closeModal,
+ appt:el=>{const a=S.appts.find(x=>x.id===el.dataset.id);if(a){a.status=el.dataset.s;toast('Appointment '+a.id+' is now '+a.status.toLowerCase());render()}},
+ 'rx-open':el=>{const a=S.appts.find(x=>x.id===el.dataset.id);S.rxs={appt:a.id,rows:[{med:'',dose:'1+0+1',timing:'After meal',days:5}],note:''};openModal(rxModal())},
+ 'rx-view':el=>{const r=S.rx.find(x=>x.apptId===el.dataset.id);openModal('<div class="stack"><h2>Prescription</h2>'+rxHtml(r)+'<div><button type="button" class="btn" data-act="modal-close">Close</button></div></div>')},
+ 'rx-add':()=>{readRx();S.rxs.rows.push({med:'',dose:'1+0+1',timing:'After meal',days:5});$('#rx-rows').innerHTML=rxRowsHtml()},
+ 'rx-del':el=>{readRx();if(S.rxs.rows.length>1){S.rxs.rows.splice(+el.dataset.i,1);$('#rx-rows').innerHTML=rxRowsHtml()}},
+ 'doc-form':el=>openModal(docFormHtml(el.dataset.id)),
+ 'doc-del':el=>{const d=docById(el.dataset.id);openModal('<div class="stack"><h2>Delete '+esc(d.name)+'?</h2><p class="muted">The doctor profile is removed from search and booking. Existing appointments stay in the records.</p><div class="row"><button type="button" class="btn btn-danger" data-act="doc-del-ok" data-id="'+d.id+'">Delete doctor</button><button type="button" class="btn" data-act="modal-close">Keep</button></div></div>')},
+ 'doc-del-ok':el=>{S.doctors=S.doctors.filter(d=>d.id!==el.dataset.id);S.accounts=S.accounts.filter(a=>!(a.role==='doctor'&&a.ref===el.dataset.id));closeModal();toast('Doctor deleted');render()},
+ 'doc-ok':el=>{const d=docById(el.dataset.id);if(d){d.verified=true;toast(d.name+' verified');render()}},
+ 'pat-form':()=>openModal(patFormHtml()),
+ 'donor-ok':el=>{const d=S.donors.find(x=>x.id===el.dataset.id);if(d){d.verified=true;toast(d.name+' verified');render()}},
+ 'req-close':el=>{const r=S.bloodReq.find(x=>x.id===el.dataset.id);if(r){r.status='Closed';toast('Request closed');render()}},
+ rep:el=>{const r=S.reports.find(x=>x.id===el.dataset.id);if(r){r.status=el.dataset.s;toast('Report '+r.id+': '+r.status.toLowerCase());render()}},
+ pay:el=>{const a=S.appts.find(x=>x.id===el.dataset.id);if(a){a.paid=true;toast('Payment recorded');render()}}
+};
+const LIVE={
+ symq:t=>{const q=t.value.trim().toLowerCase();$$('#sym-list .chip').forEach(c=>{c.hidden=!!q&&!c.dataset.t.includes(q)})},
+ care:()=>fillCare(),docs:()=>fillDocs(),blood:()=>fillBlood(),verify:t=>{S.verifyQ=t.value;fillVerify()},
+ bookdoc:()=>{S.book.date='';S.book.min=null;render()},rerender:()=>render()
+};
+const FORM={};
+const validPhone=p=>/^(\+?88)?01[3-9]\d{8}$/.test(String(p).replace(/[\s-]/g,''));
+const showErr=(id,m)=>{const e=$(id);if(e)e.innerHTML='<div class="err" role="alert">'+esc(m)+'</div>'};
+const durVal=v=>{const n=parseInt(v,10);return DURS.includes(n)?n:30};
+FORM.book=()=>{
+ const b=S.book;let e='';
+ if(!b.name.trim())e='Enter the patient name.';
+ else if(!validPhone(b.phone))e='Enter a valid Bangladeshi mobile number, for example 01712-345678.';
+ else if(!b.doc)e='Choose a doctor.';
+ else if(!b.date)e='Choose a day.';
+ else if(b.min==null)e='Choose a time.';
+ else if(b.reason.trim().length<3)e='Tell the doctor the main reason for the visit.';
+ else if(isTaken(b.doc,b.date,b.min)){e='That time was just taken. Please choose another.';b.min=null}
+ if(e){b.err=e;render();return}
+ const pid=S.user&&S.user.role==='patient'?S.user.id:null;
+ const a={id:nextId('AP',S.appts,1001),patientId:pid,patientName:b.name.trim(),phone:b.phone.trim(),doctorId:b.doc,date:b.date,min:b.min,reason:b.reason.trim(),status:'Pending',paid:false};
+ S.appts.push(a);S.book={doc:'',date:'',min:null,name:b.name,phone:b.phone,reason:'',err:'',done:a.id,pre:true};
+ toast('Request sent');render();window.scrollTo(0,0);
+};
+FORM.login=f=>{
+ const fd=new FormData(f),em=String(fd.get('email')||'').trim(),pw=String(fd.get('pw')||'');
+ if(!em||!pw){showErr('#l-err','Enter your email and password.');return}
+ if(!doLogin(em,pw,fd.get('remember')==='on'))showErr('#l-err','The email or password is not correct. Check them and try again.');
+};
+FORM.signup=f=>{
+ const fd=new FormData(f),g=k=>String(fd.get(k)||'').trim(),name=g('name'),email=g('email').toLowerCase(),phone=g('phone'),dob=g('dob'),pw=String(fd.get('pw')||''),pw2=String(fd.get('pw2')||'');
+ let e='';
+ if(name.length<2)e='Enter your full name.';
+ else if(!validPhone(phone))e='Enter a valid mobile number, for example 01712-345678.';
+ else if(!validEmail(email))e='Enter a valid email address.';
+ else if(S.accounts.some(a=>a.email===email))e='An account with this email already exists. Try logging in.';
+ else if(!dob)e='Enter your date of birth.';
+ else if(parse(dob)>today())e='Date of birth cannot be in the future.';
+ else if(!g('gender'))e='Select your gender.';
+ else if(pw.length<6)e='Choose a password with at least 6 characters.';
+ else if(pw!==pw2)e='The two passwords do not match.';
+ if(e){showErr('#s-err',e);return}
+ const p={id:nextId('P',S.patients,1001),name:name,email:email,phone:phone,dob:dob,gender:g('gender'),blood:g('blood'),address:g('address'),emg:g('emg'),photo:S.pendingPhoto||'',history:[],reports:[]};
+ S.patients.push(p);S.accounts.push({email:email,pw:pw,role:'patient',ref:p.id});
+ S.pendingPhoto='';S.next=null;S.auth.mode='login';
+ doLogin(email,pw,true);
+ toast('Account created. Welcome to CareFlow!',4000);
+};
+FORM.docsignup=f=>{
+ const fd=new FormData(f),g=k=>String(fd.get(k)||'').trim(),email=g('email').toLowerCase(),phone=g('phone'),reg=g('reg'),pw=String(fd.get('pw')||''),pw2=String(fd.get('pw2')||'');
+ const tm=s=>{const p=String(s).split(':');return (+p[0])*60+(+p[1]||0)};
+ const days=fd.getAll('days').map(Number),from=tm(fd.get('from')),to=tm(fd.get('to')),name=g('name').replace(/^dr\.?\s*/i,''),dur=durVal(fd.get('dur'));
+ let e='';
+ if(name.length<2)e='Enter your full name.';
+ else if(!validPhone(phone))e='Enter a valid mobile number, for example 01712-345678.';
+ else if(!validEmail(email))e='Enter a valid email address.';
+ else if(S.accounts.some(a=>a.email===email))e='An account with this email already exists. Try logging in.';
+ else if(!g('spec'))e='Enter your specialization.';
+ else if(!g('qual'))e='Enter your qualification.';
+ else if(!reg)e='Enter your BMDC registration number.';
+ else if(S.doctors.some(d=>String(d.reg).toLowerCase()===reg.toLowerCase()))e='This BMDC number is already registered.';
+ else if(!days.length)e='Choose at least one available day.';
+ else if(!(to-from>=dur))e='The visiting time must be at least as long as one patient visit ('+dur+' minutes).';
+ else if(pw.length<6)e='Choose a password with at least 6 characters.';
+ else if(pw!==pw2)e='The two passwords do not match.';
+ if(e){showErr('#s-err',e);return}
+ const d={id:nextId('D',S.doctors,1),name:'Dr. '+name,spec:g('spec'),dept:fd.get('dept'),qual:g('qual'),exp:Math.max(0,parseInt(fd.get('exp'),10)||0),fee:Math.max(0,parseInt(fd.get('fee'),10)||0),days:days,from:from,to:to,dur:dur,status:'Active',reg:reg,email:email,phone:phone,bio:g('bio').slice(0,500),photo:S.pendingPhoto||'',verified:false};
+ S.doctors.push(d);S.accounts.push({email:email,pw:pw,role:'doctor',ref:d.id});
+ S.pendingPhoto='';S.next=null;S.auth.mode='login';
+ doLogin(email,pw,true);
+ toast('Doctor account created. The admin will verify your BMDC number.',5000);
+};
+FORM.reset=f=>{
+ const fd=new FormData(f),email=String(fd.get('email')||'').trim().toLowerCase(),pw=String(fd.get('pw')||'');
+ const a=S.accounts.find(x=>x.email===email);
+ if(!a){showErr('#fp-err','No account uses that email.');return}
+ if(pw.length<6){showErr('#fp-err','Choose a password with at least 6 characters.');return}
+ a.pw=pw;openAuth(true);toast('Password updated. Now log in with it.');
+};
+FORM.pw=f=>{
+ const a=acctOf(S.user),fd=new FormData(f),cur=String(fd.get('cur')||''),pw=String(fd.get('pw')||''),pw2=String(fd.get('pw2')||'');
+ let e='';
+ if(!a||a.pw!==cur)e='Your current password is not correct.';
+ else if(pw.length<6)e='The new password needs at least 6 characters.';
+ else if(pw!==pw2)e='The two new passwords do not match.';
+ else if(pw===cur)e='Choose a password different from the current one.';
+ if(e){showErr('#pw-err',e);return}
+ a.pw=pw;toast('Password updated');render();
+};
+FORM.profile=f=>{
+ const u=S.user,e=ent(u),a=acctOf(u),role=u.role,fd=new FormData(f),g=k=>String(fd.get(k)||'').trim(),err=m=>showErr('#pf-err',m);
+ const name=g('name'),email=g('email').toLowerCase(),phone=g('phone');
+ if(name.length<2)return err('Enter your full name.');
+ if(!validEmail(email))return err('Enter a valid email address.');
+ if(S.accounts.some(x=>x!==a&&x.email===email))return err('Another account already uses this email.');
+ if(phone&&!validPhone(phone))return err('Enter a valid mobile number, for example 01712-345678.');
+ const upd={name:name,email:email,phone:phone};
+ if(role==='patient'){
+  if(!phone)return err('A mobile number is needed so the hospital can reach you.');
+  const dob=g('dob');if(dob&&parse(dob)>today())return err('Date of birth cannot be in the future.');
+  Object.assign(upd,{dob:dob,gender:g('gender'),blood:g('blood'),address:g('address'),emg:g('emg')});
+ } else if(role==='doctor'){
+  const tm=s=>{const p=String(s).split(':');return (+p[0])*60+(+p[1]||0)};
+  const days=fd.getAll('days').map(Number),from=tm(fd.get('from')),to=tm(fd.get('to')),dur=durVal(fd.get('dur'));
+  if(!g('spec'))return err('Enter your specialization.');
+  if(!days.length)return err('Choose at least one available day.');
+  if(!(to-from>=dur))return err('The visiting time must be at least as long as one patient visit ('+dur+' minutes).');
+  Object.assign(upd,{spec:g('spec'),dept:fd.get('dept'),qual:g('qual'),exp:Math.max(0,parseInt(fd.get('exp'),10)||0),fee:Math.max(0,parseInt(fd.get('fee'),10)||0),status:fd.get('status'),days:days,from:from,to:to,dur:dur,bio:g('bio').slice(0,500)});
+ } else {
+  upd.title=g('title');
+ }
+ Object.assign(e,upd);if(a)a.email=email;
+ if(role==='patient')S.appts.filter(x=>x.patientId===e.id).forEach(x=>{x.patientName=name;x.phone=phone});
+ S.profEdit=false;closeModal(true);toast('Profile saved');render();
+};
+
+/* photo upload: crop to a centred square, shrink, return a small JPEG data URL */
+function readPhoto(file,cb){
+ if(!file)return;
+ if(!/^image\/(jpeg|png|webp)$/.test(file.type)){toast('Please choose a JPG, PNG or WebP image.');return}
+ if(file.size>8*1024*1024){toast('That image is too large. Choose one under 8 MB.');return}
+ const rd=new FileReader();
+ rd.onerror=()=>toast('Could not read that file. Try another image.');
+ rd.onload=()=>{
+  const img=new Image();
+  img.onerror=()=>toast('That image could not be opened. Try another one.');
+  img.onload=()=>{
+   const s=Math.min(img.width,img.height),N=320,cv=document.createElement('canvas');cv.width=N;cv.height=N;
+   const cx=cv.getContext('2d');cx.fillStyle='#ffffff';cx.fillRect(0,0,N,N);
+   cx.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,N,N);
+   cb(cv.toDataURL('image/jpeg',0.86));
+  };
+  img.src=rd.result;
+ };
+ rd.readAsDataURL(file);
+}
+function refreshPhoto(){
+ const mb=$('#m-photo');
+ if(mb&&!$('#modal').hidden){mb.innerHTML=photoBox(ent(),true);chrome(route());save();return}
+ if(S.profEdit){const b=$('#photo-box');if(b)b.innerHTML=photoBox(ent());chrome(route());save()}
+ else render();
+}
+function setPhoto(file){
+ readPhoto(file,url=>{const e=ent();if(!e)return;e.photo=url;refreshPhoto();toast('Photo updated')});
+}
+
+Object.assign(ACT,{
+ 'auth-mode':el=>{S.auth.mode=el.dataset.m;openAuth(true)},
+ 'auth-role':el=>{S.auth.role=el.dataset.r;openAuth(true)},
+ 'auth-back':()=>openAuth(true),
+ 'signup-photo':()=>{const i=$('#s-photo');if(i)i.click()},
+ 'photo-pick-m':()=>{const i=$('#m-photo-in');if(i)i.click()},
+ 'pw-toggle':el=>{const i=el.parentElement.querySelector('input'),show=i.type==='password';i.type=show?'text':'password';el.textContent=show?'Hide':'Show';el.setAttribute('aria-pressed',String(show));el.setAttribute('aria-label',show?'Hide password':'Show password')},
+ /* demo buttons only fill in the login form. The person must still press "Log in". */
+ demo:el=>{const e=$('#l-e'),p=$('#l-p');if(e)e.value=el.dataset.e;if(p){p.value=DEMO_PW;p.focus()}},
+ forgot:()=>openModal(forgotHtml()),
+ 'photo-pick':()=>{const i=$('#photo-in');if(i)i.click()},
+ 'photo-del':()=>{const e=ent();if(e){e.photo='';refreshPhoto();toast('Photo removed')}},
+ 'prof-edit':()=>{S.profEdit=true;render()},
+ 'prof-cancel':()=>{S.profEdit=false;render()},
+ reset:()=>{try{localStorage.removeItem(KEY)}catch(x){}location.reload()}
+});
+FORM.donor=f=>{
+ const fd=new FormData(f),name=String(fd.get('name')||'').trim(),loc=String(fd.get('loc')||'').trim(),phone=String(fd.get('phone')||'').trim();
+ if(!name||!loc){showErr('#d-err','Enter your name and area.');return}
+ if(!validPhone(phone)){showErr('#d-err','Enter a valid mobile number, for example 01712-345678.');return}
+ const n=fd.get('last');
+ S.donors.push({id:nextId('B',S.donors,1),name:name,group:fd.get('group'),phone:phone,loc:loc,last:n?iso(addDays(today(),-Number(n))):null,verified:false});
+ S.tabs.blood='find';S.blood.group='';toast('Thank you. An admin will verify your profile.');render();
+};
+FORM.bloodreq=f=>{
+ const fd=new FormData(f),loc=String(fd.get('loc')||'').trim(),h=String(fd.get('hospital')||'').trim(),c=String(fd.get('contact')||'').trim(),p=String(fd.get('phone')||'').trim();
+ if(!loc||!h||!c){showErr('#r-err','Enter the area, hospital and a contact person.');return}
+ if(!validPhone(p)){showErr('#r-err','Enter a valid mobile number, for example 01712-345678.');return}
+ S.bloodReq.push({id:nextId('BR',S.bloodReq,1001),group:fd.get('group'),units:Math.max(1,parseInt(fd.get('units'),10)||1),loc:loc,hospital:h,contact:c,phone:p,note:String(fd.get('note')||'').trim(),date:iso(today()),status:'Open'});
+ toast('Request posted');render();
+};
+FORM.report=f=>{
+ const fd=new FormData(f),name=String(fd.get('name')||'').trim(),det=String(fd.get('details')||'').trim();
+ if(!name||det.length<10){showErr('#f-err','Enter the name used and describe what happened in a few words.');return}
+ S.reports.push({id:nextId('RP',S.reports,1001),name:name,reg:String(fd.get('reg')||'').trim(),spec:String(fd.get('spec')||'').trim(),place:String(fd.get('place')||'').trim(),details:det,date:iso(today()),status:'Under review'});
+ toast('Report sent. An admin will review it.');render();window.scrollTo(0,0);
+};
+FORM.doctor=f=>{
+ const fd=new FormData(f),id=f.dataset.id,tm=s=>{const p=String(s).split(':');return (+p[0])*60+(+p[1]||0)};
+ const email=String(fd.get('email')||'').trim().toLowerCase();
+ const o={name:String(fd.get('name')||'').trim(),spec:String(fd.get('spec')||'').trim(),dept:fd.get('dept'),qual:String(fd.get('qual')||'').trim(),exp:Math.max(0,parseInt(fd.get('exp'),10)||0),fee:Math.max(0,parseInt(fd.get('fee'),10)||0),reg:String(fd.get('reg')||'').trim(),status:fd.get('status'),days:fd.getAll('days').map(Number),from:tm(fd.get('from')),to:tm(fd.get('to')),dur:durVal(fd.get('dur'))};
+ if(!o.name||!o.spec||!o.reg){showErr('#m-err','Name, specialization and BMDC number are required.');return}
+ if(!o.days.length){showErr('#m-err','Choose at least one available day.');return}
+ if(!(o.to-o.from>=o.dur)){showErr('#m-err','The visiting time must be at least as long as one patient visit ('+o.dur+' minutes).');return}
+ if(!id){
+  if(!validEmail(email)){showErr('#m-err','Enter a valid login email for the doctor.');return}
+  if(S.accounts.some(a=>a.email===email)){showErr('#m-err','That email already has an account.');return}
+ }
+ if(id){Object.assign(docById(id),o)}
+ else{o.id=nextId('D',S.doctors,1);o.email=email;o.phone='';o.bio='';o.photo='';S.doctors.push(o);S.accounts.push({email:email,pw:'doctor123',role:'doctor',ref:o.id})}
+ closeModal();toast(id?'Doctor saved':'Doctor added. Login: '+email+' / doctor123',id?2800:8000);render();
+};
+FORM.patient=f=>{
+ const fd=new FormData(f),name=String(fd.get('name')||'').trim(),dob=String(fd.get('dob')||''),email=String(fd.get('email')||'').trim().toLowerCase();
+ if(!name||!dob||!validPhone(fd.get('phone'))){showErr('#p-err','Enter the name, date of birth and a valid mobile number.');return}
+ if(email&&!validEmail(email)){showErr('#p-err','Enter a valid email address, or leave it empty.');return}
+ if(email&&S.accounts.some(a=>a.email===email)){showErr('#p-err','That email already has an account.');return}
+ const h=String(fd.get('hist')||'').trim();
+ const p={id:nextId('P',S.patients,1001),name:name,email:email,photo:'',dob:dob,gender:fd.get('gender'),blood:fd.get('blood'),phone:String(fd.get('phone')).trim(),address:String(fd.get('address')||'').trim(),emg:String(fd.get('emg')||'').trim(),history:h?[{date:iso(today()),text:h}]:[],reports:[]};
+ S.patients.push(p);
+ if(email)S.accounts.push({email:email,pw:'patient123',role:'patient',ref:p.id});
+ closeModal();toast(email?'Patient added. Login: '+email+' / patient123':'Patient added',email?8000:2800);render();
+};
+FORM.rx=()=>{
+ readRx();const rows=S.rxs.rows.filter(r=>r.med.trim());
+ if(!rows.length){showErr('#rx-err','Add at least one medicine.');return}
+ const a=S.appts.find(x=>x.id===S.rxs.appt);
+ S.rx.push({id:nextId('RX',S.rx,1001),apptId:a.id,patientId:a.patientId,doctorId:a.doctorId,date:iso(today()),note:S.rxs.note.trim(),items:rows.map(r=>({med:r.med.trim(),dose:r.dose,timing:r.timing,days:r.days}))});
+ a.status='Completed';closeModal();toast('Prescription saved. Visit completed.');render();
+};
+
+/* ---------- wiring ---------- */
+document.addEventListener('click',e=>{
+ if(e.target===$('#modal')){closeModal();return}
+ const el=e.target.closest('[data-act]');if(!el)return;
+ const fn=ACT[el.dataset.act];if(fn){fn(el,e)}
+});
+document.addEventListener('submit',e=>{const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();const fn=FORM[f.dataset.form];if(fn)fn(f)});
+function onField(e){
+ const t=e.target;if(!t||!t.dataset)return;
+ if(t.dataset.bind){const p=t.dataset.bind.split(':');S[p[0]][p[1]]=t.type==='checkbox'?t.checked:t.value}
+ if(t.dataset.live&&LIVE[t.dataset.live])LIVE[t.dataset.live](t);
+}
+document.addEventListener('input',onField);
+document.addEventListener('change',e=>{
+ const t=e.target;
+ if(t.dataset&&t.dataset.photo){const f=t.files&&t.files[0];t.value='';if(t.dataset.photo==='signup')readPhoto(f,u=>{S.pendingPhoto=u;const pv=$('#s-prev');if(pv)pv.innerHTML=av({name:'?',photo:u},'lg')});else setPhoto(f);return}
+ if(t.tagName==='SELECT'||t.type==='checkbox')onField(e);
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden)closeModal()});
+
+/* ---------- router ---------- */
+const POST={care:fillCare,doctors:fillDocs,blood:fillBlood,verify:fillVerify};
+function route(){
+ const h=location.hash.slice(1);
+ if(S.user&&!ent(S.user))S.user=null;
+ if(!Object.prototype.hasOwnProperty.call(views,h))return 'home';
+ if((h==='dashboard'||h==='profile')&&!S.user){S.next=h;return 'login'}
+ if(h==='login'&&S.user)return 'dashboard';
+ return h;
+}
+function chrome(r){
+ $$('.nav a').forEach(a=>{if(a.dataset.r===r)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+ const me=S.user?ent(S.user):null;
+ $('#top-user').innerHTML='<a class="btn btn-danger btn-sm" href="tel:999">'+ico('phone',15)+' Emergency 999</a>'+(me?'<a class="me" href="#profile" aria-label="My profile"'+(r==='profile'?' aria-current="page"':'')+'>'+av(me,'sm')+'<span>'+esc(short(me.name))+'</span></a><a class="btn btn-sm" href="#dashboard"'+(r==='dashboard'?' aria-current="page"':'')+'>Dashboard</a><button type="button" class="btn btn-sm" data-act="logout">Log out</button>':'<a class="btn btn-primary btn-sm" href="#login">Log in</a>');
+}
+function render(){
+ const r=route();
+ save();
+ $('#app').innerHTML=views[r]();
+ if(POST[r])POST[r]();
+ chrome(r);
+ if(r==='login')openAuth();
+}
+function go(r){if(location.hash.slice(1)===r){render();window.scrollTo(0,0)}else location.hash=r}
+window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0)});
+render();
+})();
+</script>
+</body>
+</html>
